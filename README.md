@@ -40,13 +40,13 @@ O sistema rastreia a **"bateria mental"** do usuário ao longo do tempo, correla
 ┌─────────────────────────────────────────────────────────────┐
 │                        NEUROFLOW                            │
 │                                                             │
-│   ┌──────────────┐    ┌──────────────┐    ┌─────────────┐  │
+│   ┌──────────────┐    ┌──────────────┐    ┌─────────────┐   │
 │   │   Flutter    │◄──►│  Node.js API  │◄──►│    MySQL    │  │
 │   │   (Mobile)   │    │  (Backend)    │    │  (Database) │  │
 │   │              │    │               │    │             │  │
 │   │  Clean Arch  │    │  RESTful +    │    │  Sequelize  │  │
 │   │  Cognitiva   │    │  JWT Auth     │    │  ORM + N:N  │  │
-│   └──────────────┘    └──────────────┘    └─────────────┘  │
+│   └──────────────┘    └──────────────┘    └─────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -153,5 +153,5 @@ flutter run
 *Construído com cuidado para quem sente o mundo de forma intensa.*
 
 </div>
----
+
 <p align="center">Desenvolvido como projeto MVP - 2026</p>
