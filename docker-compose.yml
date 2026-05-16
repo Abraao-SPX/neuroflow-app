@@ -1,0 +1,17 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: neuroflow-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: neuroflow_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # O MySQL no Docker roda automaticamente arquivos .sql contidos nessa pasta ao inicializar
+      - ./backend/database:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql_data:
