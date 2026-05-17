@@ -16,7 +16,25 @@ function getTokenExpiration() {
     return process.env.TOKEN_EXPIRATION;
 }
 
+function getRefreshTokenSecret() {
+    if (!process.env.REFRESH_TOKEN_SECRET) {
+        throw new Error('REFRESH_TOKEN_SECRET must be defined in the environment.');
+    }
+
+    return process.env.REFRESH_TOKEN_SECRET;
+}
+
+function getRefreshTokenExpiration() {
+    if (!process.env.REFRESH_TOKEN_EXPIRATION) {
+        throw new Error('REFRESH_TOKEN_EXPIRATION must be defined in the environment.');
+    }
+
+    return process.env.REFRESH_TOKEN_EXPIRATION;
+}
+
 module.exports = {
     getJwtSecret,
-    getTokenExpiration
+    getTokenExpiration,
+    getRefreshTokenSecret,
+    getRefreshTokenExpiration
 };

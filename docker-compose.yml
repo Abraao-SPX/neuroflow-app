@@ -30,6 +30,8 @@ services:
       - DB_NAME=neuroflow_db
       - JWT_SECRET=sua_chave_jwt_secreta_e_segura
       - TOKEN_EXPIRATION=1h
+      - REFRESH_TOKEN_SECRET=sua_chave_refresh_secreta_e_segura
+      - REFRESH_TOKEN_EXPIRATION=30d
     depends_on:
       - db
     networks:

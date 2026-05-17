@@ -12,11 +12,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _token != null;
 
-  // Inicializa sem restaurar token persistido.
+  // Inicializa tentando restaurar a sessao por refresh token.
   Future<void> initAuth() async {
-    _token = null;
-    _user = null;
-    await AuthService.logout();
+    final restored = await AuthService.restoreSession();
+    _token = restored?['token'];
+    _user = restored?['user'];
     notifyListeners();
   }
 

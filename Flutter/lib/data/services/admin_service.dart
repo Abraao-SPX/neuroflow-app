@@ -12,13 +12,14 @@ class AdminService {
       throw Exception('Sessao expirada. Faca login novamente.');
     }
 
-    final response = await http.get(
-      Uri.parse('$_baseUrl/users'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    var response = await _getUsersWithToken(token);
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      final refreshed = await AuthService.refreshAccessToken();
+      final refreshedToken = refreshed?['token'];
+      if (refreshedToken is String) {
+        response = await _getUsersWithToken(refreshedToken);
+      }
+    }
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -40,13 +41,14 @@ class AdminService {
       throw Exception('Sessao expirada. Faca login novamente.');
     }
 
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/users/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    var response = await _deleteUserWithToken(id, token);
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      final refreshed = await AuthService.refreshAccessToken();
+      final refreshedToken = refreshed?['token'];
+      if (refreshedToken is String) {
+        response = await _deleteUserWithToken(id, refreshedToken);
+      }
+    }
 
     if (response.statusCode != 200) {
       final data = jsonDecode(response.body);
@@ -54,5 +56,25 @@ class AdminService {
         data['message'] ?? data['error'] ?? 'Failed to delete user',
       );
     }
+  }
+
+  Future<http.Response> _getUsersWithToken(String token) {
+    return http.get(
+      Uri.parse('$_baseUrl/users'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
+  Future<http.Response> _deleteUserWithToken(int id, String token) {
+    return http.delete(
+      Uri.parse('$_baseUrl/users/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
   }
 }

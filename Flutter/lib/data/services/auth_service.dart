@@ -7,7 +7,9 @@ import '../../core/constants/api_constants.dart';
 class AuthService {
   static String get baseUrl => ApiConstants.authUrl;
   static const String _authTokenKey = 'auth_token';
+  static const String _refreshTokenKey = 'refresh_token';
   static String? _sessionToken;
+  static Map<String, dynamic>? _currentUser;
 
   static Map<String, dynamic> _safeDecode(String body) {
     try {
@@ -42,8 +44,7 @@ class AuthService {
         throw Exception('Resposta de login invalida.');
       }
 
-      _sessionToken = token;
-      await clearPersistedSession();
+      await _storeSession(data);
       return data;
     } else {
       throw Exception(data['message'] ?? 'Erro ao realizar login.');
@@ -68,8 +69,7 @@ class AuthService {
     if (response.statusCode == 201) {
       final token = data['token'];
       if (token is String && token.isNotEmpty) {
-        _sessionToken = token;
-        await clearPersistedSession();
+        await _storeSession(data);
       }
       return data;
     } else {
@@ -77,20 +77,100 @@ class AuthService {
     }
   }
 
-  // Token de sessao: existe apenas enquanto o app esta aberto.
-  static Future<String?> getStoredToken() async {
-    return _sessionToken;
+  static Future<void> _storeSession(Map<String, dynamic> data) async {
+    final token = data['accessToken'] ?? data['token'];
+    final refreshToken = data['refreshToken'];
+    if (token is! String || token.isEmpty) {
+      throw Exception('Resposta sem token de acesso.');
+    }
+    if (refreshToken is! String || refreshToken.isEmpty) {
+      throw Exception('Resposta sem refresh token.');
+    }
+
+    _sessionToken = token;
+    if (data['user'] is Map<String, dynamic>) {
+      _currentUser = data['user'] as Map<String, dynamic>;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_authTokenKey, token);
+    await prefs.setString(_refreshTokenKey, refreshToken);
   }
 
-  // Remove tokens persistidos por versoes antigas do app.
+  static Future<Map<String, dynamic>?> restoreSession() async {
+    final token = await getStoredToken();
+    if (token == null) {
+      return null;
+    }
+
+    if (_currentUser != null) {
+      return {'token': token, 'accessToken': token, 'user': _currentUser};
+    }
+
+    return refreshAccessToken();
+  }
+
+  static Future<String?> getStoredToken() async {
+    if (_sessionToken != null) {
+      return _sessionToken;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    _sessionToken = prefs.getString(_authTokenKey);
+    if (_sessionToken != null) {
+      return _sessionToken;
+    }
+
+    final refreshed = await refreshAccessToken();
+    return refreshed?['token'] as String?;
+  }
+
+  static Future<Map<String, dynamic>?> refreshAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString(_refreshTokenKey);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return null;
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/refresh'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refreshToken': refreshToken}),
+    );
+
+    final data = _safeDecode(response.body);
+    if (response.statusCode == 200) {
+      await _storeSession(data);
+      return data;
+    }
+
+    await clearPersistedSession();
+    return null;
+  }
+
   static Future<void> clearPersistedSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_authTokenKey);
+    await prefs.remove(_refreshTokenKey);
   }
 
-  // Limpa a sessao atual.
   static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString(_refreshTokenKey);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      try {
+        await http.post(
+          Uri.parse('$baseUrl/logout'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'refreshToken': refreshToken}),
+        );
+      } catch (_) {
+        // Logout local ainda deve funcionar mesmo sem conexao.
+      }
+    }
+
     _sessionToken = null;
+    _currentUser = null;
     await clearPersistedSession();
   }
 

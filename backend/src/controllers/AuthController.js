@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const UserModel = require('../models/UserModel');
+const RefreshTokenModel = require('../models/RefreshTokenModel');
 
 class AuthController {
     static async register(req, res) {
@@ -32,11 +33,14 @@ class AuthController {
                 role: 'user'
             });
             const token = UserModel.generateAccessToken(newUser);
+            const refreshToken = await RefreshTokenModel.issueForUser(newUser);
 
             return res.status(201).json({
                 success: true,
                 message: 'Usuario cadastrado com sucesso!',
                 token,
+                accessToken: token,
+                refreshToken,
                 user: newUser.toSafeJSON()
             });
         } catch (error) {
@@ -66,11 +70,14 @@ class AuthController {
             }
 
             const token = UserModel.generateAccessToken(user);
+            const refreshToken = await RefreshTokenModel.issueForUser(user);
 
             return res.status(200).json({
                 success: true,
                 message: 'Login realizado com sucesso.',
                 token,
+                accessToken: token,
+                refreshToken,
                 user: user.toSafeJSON()
             });
         } catch (error) {
@@ -132,10 +139,40 @@ class AuthController {
         });
     }
 
-    static logout(req, res) {
+    static async refresh(req, res) {
+        try {
+            const { refreshToken } = req.body;
+            if (!refreshToken) {
+                return res.status(400).json({ success: false, message: 'Refresh token e obrigatorio.' });
+            }
+
+            const session = await RefreshTokenModel.rotate(refreshToken);
+            if (!session) {
+                return res.status(401).json({ success: false, message: 'Refresh token invalido ou expirado.' });
+            }
+
+            return res.status(200).json({
+                success: true,
+                token: session.accessToken,
+                accessToken: session.accessToken,
+                refreshToken: session.refreshToken,
+                user: session.user.toSafeJSON()
+            });
+        } catch (error) {
+            console.error('[AuthController] Erro em refresh:', error);
+            return res.status(401).json({ success: false, message: 'Refresh token invalido ou expirado.' });
+        }
+    }
+
+    static async logout(req, res) {
+        const { refreshToken } = req.body || {};
+        if (refreshToken) {
+            await RefreshTokenModel.revoke(refreshToken);
+        }
+
         return res.status(200).json({
             success: true,
-            message: 'Logout realizado. Remova o token no cliente.'
+            message: 'Logout realizado.'
         });
     }
 }

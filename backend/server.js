@@ -4,8 +4,14 @@ const cors = require('cors');
 const sequelize = require('./src/config/sequelize');
 require('./src/models/UserModel');
 require('./src/models/TaskSequelizeModel');
+require('./src/models/RefreshTokenModel');
 const ensureAuthSchema = require('./src/database/ensureAuthSchema');
-const { getJwtSecret, getTokenExpiration } = require('./src/config/auth');
+const {
+    getJwtSecret,
+    getRefreshTokenExpiration,
+    getRefreshTokenSecret,
+    getTokenExpiration
+} = require('./src/config/auth');
 const authMiddleware = require('./src/middlewares/authMiddleware');
 const AuthController = require('./src/controllers/AuthController');
 const taskRoutes = require('./src/routes/taskRoutes');
@@ -28,6 +34,8 @@ async function startServer() {
     try {
         getJwtSecret();
         getTokenExpiration();
+        getRefreshTokenSecret();
+        getRefreshTokenExpiration();
         await sequelize.authenticate();
         await ensureAuthSchema(sequelize);
         await sequelize.sync();
