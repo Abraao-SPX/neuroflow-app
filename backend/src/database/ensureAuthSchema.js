@@ -24,6 +24,24 @@ async function ensureAuthSchema(sequelize) {
         table = await queryInterface.describeTable('Usuarios');
     }
 
+    await sequelize.query(`
+        UPDATE Usuarios
+        SET updated_at = CASE
+            WHEN created_at IS NULL OR CAST(created_at AS CHAR) = '0000-00-00 00:00:00'
+            THEN NOW()
+            ELSE created_at
+        END
+        WHERE updated_at IS NULL
+           OR CAST(updated_at AS CHAR) = '0000-00-00 00:00:00'
+    `);
+
+    await sequelize.query(`
+        UPDATE Usuarios
+        SET created_at = NOW()
+        WHERE created_at IS NULL
+           OR CAST(created_at AS CHAR) = '0000-00-00 00:00:00'
+    `);
+
     if (table.username) {
         const indexes = await queryInterface.showIndex('Usuarios');
         const hasUsernameUnique = indexes.some((index) => {
