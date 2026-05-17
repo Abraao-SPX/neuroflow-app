@@ -106,8 +106,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () {
-              Provider.of<AuthProvider>(context, listen: false).logout();
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              await Provider.of<AuthProvider>(context, listen: false).logout();
+              if (!context.mounted) return;
+              navigator.pushNamedAndRemoveUntil('/login', (route) => false);
             },
             tooltip: 'Sair',
           ),

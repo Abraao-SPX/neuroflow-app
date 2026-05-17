@@ -12,9 +12,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _token != null;
 
-  // Inicializa verificando se há token armazenado
+  // Inicializa sem restaurar token persistido.
   Future<void> initAuth() async {
-    _token = await AuthService.getStoredToken();
+    _token = null;
+    _user = null;
+    await AuthService.logout();
     notifyListeners();
   }
 
@@ -58,9 +60,9 @@ class AuthProvider extends ChangeNotifier {
 
   // Logout
   Future<void> logout() async {
-    await AuthService.logout();
     _token = null;
     _user = null;
     notifyListeners();
+    await AuthService.logout();
   }
 }

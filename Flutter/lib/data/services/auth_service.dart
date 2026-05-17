@@ -5,8 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/api_constants.dart';
 
 class AuthService {
-  // A URL agora é gerenciada de forma unificada no ApiConstants (fácil deploy Pro MVP)
   static String get baseUrl => ApiConstants.authUrl;
+  static const String _authTokenKey = 'auth_token';
+  static String? _sessionToken;
 
   static Map<String, dynamic> _safeDecode(String body) {
     try {
@@ -36,9 +37,13 @@ class AuthService {
     final data = _safeDecode(response.body);
 
     if (response.statusCode == 200) {
-      // Armazena o token localmente
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', data['token']);
+      final token = data['token'];
+      if (token is! String || token.isEmpty) {
+        throw Exception('Resposta de login invalida.');
+      }
+
+      _sessionToken = token;
+      await clearPersistedSession();
       return data;
     } else {
       throw Exception(data['message'] ?? 'Erro ao realizar login.');
@@ -61,10 +66,10 @@ class AuthService {
     final data = _safeDecode(response.body);
 
     if (response.statusCode == 201) {
-      // Armazena o token localmente
-      final prefs = await SharedPreferences.getInstance();
-      if (data['token'] != null) {
-        await prefs.setString('auth_token', data['token']);
+      final token = data['token'];
+      if (token is String && token.isNotEmpty) {
+        _sessionToken = token;
+        await clearPersistedSession();
       }
       return data;
     } else {
@@ -72,16 +77,21 @@ class AuthService {
     }
   }
 
-  // Função para recuperar token armazenado
+  // Token de sessao: existe apenas enquanto o app esta aberto.
   static Future<String?> getStoredToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return _sessionToken;
   }
 
-  // Função para limpar token (logout)
-  static Future<void> logout() async {
+  // Remove tokens persistidos por versoes antigas do app.
+  static Future<void> clearPersistedSession() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await prefs.remove(_authTokenKey);
+  }
+
+  // Limpa a sessao atual.
+  static Future<void> logout() async {
+    _sessionToken = null;
+    await clearPersistedSession();
   }
 
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
@@ -99,7 +109,7 @@ class AuthService {
       return data;
     } else {
       throw Exception(
-        data['message'] ?? 'Erro ao solicitar recuperação de senha.',
+        data['message'] ?? 'Erro ao solicitar recuperacao de senha.',
       );
     }
   }

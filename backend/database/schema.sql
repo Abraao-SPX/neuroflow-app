@@ -4,7 +4,7 @@ USE neuroflow_db;
 CREATE TABLE IF NOT EXISTS Usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL,
     role VARCHAR(20) DEFAULT 'user',
     reset_token VARCHAR(255) DEFAULT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS Tarefas (
 
 CREATE TABLE IF NOT EXISTS Gatilhos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(50) NOT NULL,
+    nome VARCHAR(50) NOT NULL UNIQUE,
     icone VARCHAR(50)
 );
 
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS Registros_Gatilhos (
     FOREIGN KEY (gatilho_id) REFERENCES Gatilhos(id) ON DELETE CASCADE
 );
 
-INSERT INTO Gatilhos (nome, icone) VALUES 
+INSERT IGNORE INTO Gatilhos (nome, icone) VALUES 
 ('Barulho','volume_up'),
 ('Luz Forte','wb_sunny'),
 ('Multidão','groups'),

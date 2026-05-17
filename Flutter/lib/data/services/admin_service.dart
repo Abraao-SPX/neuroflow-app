@@ -8,6 +8,10 @@ class AdminService {
 
   Future<List<dynamic>> getUsers() async {
     final token = await AuthService.getStoredToken();
+    if (token == null) {
+      throw Exception('Sessao expirada. Faca login novamente.');
+    }
+
     final response = await http.get(
       Uri.parse('$_baseUrl/users'),
       headers: {
@@ -17,7 +21,14 @@ class AdminService {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic> && data['data'] is List) {
+        return data['data'] as List<dynamic>;
+      }
+      if (data is List) {
+        return data;
+      }
+      throw Exception('Resposta invalida ao carregar usuarios.');
     } else {
       throw Exception('Failed to load users: ${response.statusCode}');
     }
@@ -25,6 +36,10 @@ class AdminService {
 
   Future<void> deleteUser(int id) async {
     final token = await AuthService.getStoredToken();
+    if (token == null) {
+      throw Exception('Sessao expirada. Faca login novamente.');
+    }
+
     final response = await http.delete(
       Uri.parse('$_baseUrl/users/$id'),
       headers: {
@@ -35,7 +50,9 @@ class AdminService {
 
     if (response.statusCode != 200) {
       final data = jsonDecode(response.body);
-      throw Exception(data['error'] ?? 'Failed to delete user');
+      throw Exception(
+        data['message'] ?? data['error'] ?? 'Failed to delete user',
+      );
     }
   }
 }

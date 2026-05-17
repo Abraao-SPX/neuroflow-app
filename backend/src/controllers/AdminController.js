@@ -3,38 +3,61 @@ const db = require('../config/db');
 class AdminController {
     static async getAllUsers(req, res) {
         try {
-            const query = 'SELECT id, username as name, email, role, created_at FROM Usuarios ORDER BY created_at DESC';
+            const query = `
+                SELECT id, username AS name, email, role, created_at
+                FROM Usuarios
+                ORDER BY created_at DESC
+            `;
             const [users] = await db.execute(query);
-            res.status(200).json(users);
+            return res.status(200).json({ success: true, data: users });
         } catch (error) {
-            console.error('Erro ao buscar usuários:', error);
-            res.status(500).json({ error: 'Erro interno ao buscar usuários.' });
+            console.error('[AdminController] Erro ao buscar usuarios:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro interno ao buscar usuarios.'
+            });
         }
     }
 
     static async deleteUser(req, res) {
-        const { id } = req.params;
         try {
-            // First check if user exists
-            const checkQuery = 'SELECT id FROM Usuarios WHERE id = ?';
-            const [users] = await db.execute(checkQuery, [id]);
-            
-            if (users.length === 0) {
-                return res.status(404).json({ error: 'Usuário não encontrado.' });
+            const userId = Number.parseInt(req.params.id, 10);
+
+            if (Number.isNaN(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'ID de usuario invalido.'
+                });
             }
 
-            // Remove user's tasks first (or handle cascade delete in sql if configured)
-            // It's safer to do it manually if we are not sure about cascade setup
-            await db.execute('DELETE FROM Tarefas WHERE usuario_id = ?', [id]);
-            
-            // Delete user
-            const deleteQuery = 'DELETE FROM Usuarios WHERE id = ?';
-            await db.execute(deleteQuery, [id]);
-            
-            res.status(200).json({ message: 'Conta apagada com sucesso.' });
+            if (req.userId === userId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'O administrador nao pode apagar a propria conta logada.'
+                });
+            }
+
+            const [users] = await db.execute(
+                'SELECT id FROM Usuarios WHERE id = ? LIMIT 1',
+                [userId]
+            );
+            if (users.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Usuario nao encontrado.'
+                });
+            }
+
+            await db.execute('DELETE FROM Tarefas WHERE usuario_id = ?', [userId]);
+            await db.execute('DELETE FROM Usuarios WHERE id = ?', [userId]);
+
+            return res.status(200).json({ success: true, message: 'Conta apagada com sucesso.' });
         } catch (error) {
-            console.error('Erro ao apagar usuário:', error);
-            res.status(500).json({ error: 'Erro interno ao apagar usuário.' });
+            console.error('[AdminController] Erro ao apagar usuario:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro interno ao apagar usuario.'
+            });
         }
     }
 }
