@@ -1,52 +1,145 @@
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const db = require('../config/db');
+const { DataTypes, Model, Op } = require('sequelize');
+const sequelize = require('../config/sequelize');
+const { getJwtSecret, getTokenExpiration } = require('../config/auth');
 
-class UserModel {
-    static async create(user) {
-        // Mapeando "name" para "username" e "password" para "senha" no banco, conforme seu schema.sql
-        const query = 'INSERT INTO Usuarios (username, email, senha, role) VALUES (?, ?, ?, ?)';
-        const [result] = await db.execute(query, [user.name, user.email, user.password, user.role || 'user']);
-        
-        return { 
-            id: result.insertId, 
-            name: user.name, 
-            email: user.email, 
-            role: user.role || 'user' 
+class UserModel extends Model {
+    toSafeJSON() {
+        return {
+            id: this.id,
+            username: this.username,
+            name: this.username,
+            email: this.email,
+            role: this.role
         };
     }
 
-    static async findByEmail(email) {
-        // Ajustando as colunas retornadas do SQL (senha as password, username as name) 
-        // para manter compatibilidade com o Controller
-        const query = 'SELECT id, username as name, email, senha as password, role, reset_token, reset_token_expires FROM Usuarios WHERE email = ?';
-        const [rows] = await db.execute(query, [email]);
-        return rows[0]; 
-    }
-
-    static async findByResetToken(token) {
-        const query = 'SELECT id, username as name, email, senha as password, role FROM Usuarios WHERE reset_token = ? AND reset_token_expires > NOW()';
-        const [rows] = await db.execute(query, [token]);
-        return rows[0];
-    }
-
-    static async updateResetToken(userId, token, expires) {
-        const query = 'UPDATE Usuarios SET reset_token = ?, reset_token_expires = ? WHERE id = ?';
-        await db.execute(query, [token, expires, userId]);
-    }
-
-    static async updatePassword(userId, newPassword) {
-        const query = 'UPDATE Usuarios SET senha = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?';
-        await db.execute(query, [newPassword, userId]);
+    static generateAccessToken(user) {
+        return jwt.sign(
+            {
+                id: user.id,
+                username: user.username,
+                role: user.role
+            },
+            getJwtSecret(),
+            { expiresIn: getTokenExpiration() }
+        );
     }
 
     static generateToken(user) {
-        // Gerando token com a secret key do .env
-        return jwt.sign(
-            { id: user.id, email: user.email, role: user.role || 'user' }, 
-            process.env.JWT_SECRET || 'your_secret_key_change_in_production', 
-            { expiresIn: '1h' }
+        return this.generateAccessToken(user);
+    }
+
+    static async findByEmail(email) {
+        return this.findOne({ where: { email } });
+    }
+
+    static async findByUsername(username) {
+        return this.findOne({ where: { username } });
+    }
+
+    static async findByLogin(identifier) {
+        return this.findOne({
+            where: {
+                [Op.or]: [
+                    { email: identifier },
+                    { username: identifier }
+                ]
+            }
+        });
+    }
+
+    static async findByResetToken(token) {
+        return this.findOne({
+            where: {
+                resetToken: token,
+                resetTokenExpires: {
+                    [Op.gt]: new Date()
+                }
+            }
+        });
+    }
+
+    static async updateResetToken(userId, token, expires) {
+        await this.update(
+            {
+                resetToken: token,
+                resetTokenExpires: expires
+            },
+            { where: { id: userId } }
         );
     }
+
+    static async updatePassword(userId, newPassword) {
+        const user = await this.findByPk(userId);
+        if (!user) return null;
+
+        user.password = newPassword;
+        user.resetToken = null;
+        user.resetTokenExpires = null;
+        await user.save();
+        return user;
+    }
 }
+
+UserModel.init(
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        username: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,
+            validate: {
+                isEmail: true
+            }
+        },
+        password: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        role: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: 'user'
+        },
+        resetToken: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: 'reset_token'
+        },
+        resetTokenExpires: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'reset_token_expires'
+        }
+    },
+    {
+        sequelize,
+        modelName: 'User',
+        tableName: 'Usuarios',
+        hooks: {
+            beforeCreate: async (user) => {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            },
+            beforeUpdate: async (user) => {
+                if (!user.changed('password')) return;
+
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        }
+    }
+);
 
 module.exports = UserModel;

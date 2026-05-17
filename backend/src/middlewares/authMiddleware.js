@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../config/auth');
 
 const authMiddleware = (req, res, next) => {
-    // Busca o token no cabeçalho "Authorization: Bearer <token>"
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-        return res.status(401).json({ success: false, message: 'Acesso negado. Token não fornecido.' });
+        return res.status(401).json({ success: false, message: 'Acesso negado. Token nao fornecido.' });
     }
 
     const parts = authHeader.split(' ');
@@ -21,13 +21,17 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        // A mesma secret_key que usamos no UserModel, carregada do .env
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key_change_in_production');
-        req.userId = decoded.id; // Pendura o ID do usuário na requisição para o Controller saber quem é
-        req.userRole = decoded.role; // Pendura a role (user/admin) para uso dos middlewares de autorização
-        return next(); // Libera a catraca
+        const decoded = jwt.verify(token, getJwtSecret());
+        req.user = {
+            id: decoded.id,
+            username: decoded.username,
+            role: decoded.role
+        };
+        req.userId = decoded.id;
+        req.userRole = decoded.role;
+        return next();
     } catch (err) {
-        return res.status(401).json({ success: false, message: 'Token inválido ou expirado.' });
+        return res.status(403).json({ success: false, message: 'Token invalido ou expirado.' });
     }
 };
 

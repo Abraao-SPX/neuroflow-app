@@ -1,35 +1,44 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const UserModel = require('../models/UserModel');
 
 class AuthController {
     static async register(req, res) {
         try {
-            const { name, email, password } = req.body;
+            const password = req.body.password;
+            const username = String(req.body.username || req.body.name || '').trim();
+            const email = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
 
-            // Validação simples (Guard Clauses)
-            if (!name || !email || !password) {
-                return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios.' });
+            if (!username || !password) {
+                return res.status(400).json({ success: false, message: 'Username e password sao obrigatorios.' });
             }
 
-            const userExists = await UserModel.findByEmail(email);
-            if (userExists) {
-                return res.status(409).json({ success: false, message: 'E-mail já está em uso.' });
+            const usernameExists = await UserModel.findByUsername(username);
+            if (usernameExists) {
+                return res.status(409).json({ success: false, message: 'Username ja esta em uso.' });
             }
 
-            // Hash da senha com bcrypt (10 rounds)
-            const hashedPassword = await bcrypt.hash(password, 10);
-            
-            // Por padrão, garantimos que qualquer cadastro via AuthController seja 'user'
-            const newUser = await UserModel.create({ name, email, password: hashedPassword, role: 'user' });
-            const token = UserModel.generateToken(newUser);
+            if (email) {
+                const emailExists = await UserModel.findByEmail(email);
+                if (emailExists) {
+                    return res.status(409).json({ success: false, message: 'E-mail ja esta em uso.' });
+                }
+            }
+
+            const newUser = await UserModel.create({
+                username,
+                email,
+                password,
+                role: 'user'
+            });
+            const token = UserModel.generateAccessToken(newUser);
 
             return res.status(201).json({
                 success: true,
-                message: 'Usuário cadastrado com sucesso!',
-                token: token,
-                user: newUser
+                message: 'Usuario cadastrado com sucesso!',
+                token,
+                user: newUser.toSafeJSON()
             });
-
         } catch (error) {
             console.error('[AuthController] Erro no registro:', error);
             return res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
@@ -38,35 +47,32 @@ class AuthController {
 
     static async login(req, res) {
         try {
-            const { email, password } = req.body;
+            const { password } = req.body;
+            const identifier = String(req.body.username || req.body.email || '').trim();
 
-            if (!email || !password) {
-                return res.status(400).json({ success: false, message: 'Email e senha são obrigatórios.' });
+            if (!identifier || !password) {
+                return res.status(400).json({ success: false, message: 'Username/email e password sao obrigatorios.' });
             }
 
-            const user = await UserModel.findByEmail(email);
+            const user = await UserModel.findByLogin(identifier);
 
-            // Verifica se o usuário existe e se a senha está correta
             if (!user) {
-                return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+                return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
             }
 
-            // Compara a senha fornecida com o hash armazenado
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
-                return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+                return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
             }
 
-            const token = UserModel.generateToken(user);
-            delete user.password;
+            const token = UserModel.generateAccessToken(user);
 
             return res.status(200).json({
                 success: true,
                 message: 'Login realizado com sucesso.',
-                token: token,
-                user: user
+                token,
+                user: user.toSafeJSON()
             });
-
         } catch (error) {
             console.error('[AuthController] Erro no login:', error);
             return res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
@@ -75,29 +81,22 @@ class AuthController {
 
     static async forgotPassword(req, res) {
         try {
-            const { email } = req.body;
+            const email = req.body.email ? String(req.body.email).trim().toLowerCase() : '';
             if (!email) {
-                return res.status(400).json({ success: false, message: 'E-mail é obrigatório.' });
+                return res.status(400).json({ success: false, message: 'E-mail e obrigatorio.' });
             }
 
             const user = await UserModel.findByEmail(email);
             if (!user) {
-                // Return success silently for security
-                return res.status(200).json({ success: true, message: 'Se o e-mail estiver cadastrado, as instruções foram enviadas.' });
+                return res.status(200).json({ success: true, message: 'Se o e-mail estiver cadastrado, as instrucoes foram enviadas.' });
             }
 
-            const crypto = require('crypto');
             const token = crypto.randomBytes(32).toString('hex');
-            
-            // Expires in 1 hour
-            const expires = new Date(Date.now() + 3600000).toISOString().slice(0, 19).replace('T', ' '); 
+            const expires = new Date(Date.now() + 3600000);
 
             await UserModel.updateResetToken(user.id, token, expires);
 
-            // In a real application, send this token via email
-            console.log(`[Mock Email] Token de recuperação de senha para ${email}: ${token}`);
-
-            return res.status(200).json({ success: true, message: 'Se o e-mail estiver cadastrado, as instruções foram enviadas.', token }); // Token included for development/testing
+            return res.status(200).json({ success: true, message: 'Se o e-mail estiver cadastrado, as instrucoes foram enviadas.' });
         } catch (error) {
             console.error('[AuthController] Erro em forgotPassword:', error);
             return res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
@@ -108,22 +107,36 @@ class AuthController {
         try {
             const { token, newPassword } = req.body;
             if (!token || !newPassword) {
-                return res.status(400).json({ success: false, message: 'Token e nova senha são obrigatórios.' });
+                return res.status(400).json({ success: false, message: 'Token e nova password sao obrigatorios.' });
             }
 
             const user = await UserModel.findByResetToken(token);
             if (!user) {
-                return res.status(400).json({ success: false, message: 'Token inválido ou expirado.' });
+                return res.status(400).json({ success: false, message: 'Token invalido ou expirado.' });
             }
 
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
-            await UserModel.updatePassword(user.id, hashedPassword);
+            await UserModel.updatePassword(user.id, newPassword);
 
-            return res.status(200).json({ success: true, message: 'Senha atualizada com sucesso.' });
+            return res.status(200).json({ success: true, message: 'Password atualizada com sucesso.' });
         } catch (error) {
             console.error('[AuthController] Erro em resetPassword:', error);
             return res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
         }
+    }
+
+    static protected(req, res) {
+        return res.status(200).json({
+            success: true,
+            message: 'Acesso autorizado.',
+            user: req.user
+        });
+    }
+
+    static logout(req, res) {
+        return res.status(200).json({
+            success: true,
+            message: 'Logout realizado. Remova o token no cliente.'
+        });
     }
 }
 
