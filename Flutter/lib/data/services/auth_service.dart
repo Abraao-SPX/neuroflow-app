@@ -2,13 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:flutter/foundation.dart';
+import '../../core/constants/api_constants.dart';
 
 class AuthService {
-  // URL da API - Detecta automaticamente se é web/desktop (localhost) ou emulador Android (10.0.2.2)
-  static const String baseUrl = kIsWeb
-      ? 'http://localhost:3000/api/auth'
-      : 'http://10.0.2.2:3000/api/auth';
+  // A URL agora é gerenciada de forma unificada no ApiConstants (fácil deploy Pro MVP)
+  static String get baseUrl => ApiConstants.authUrl;
 
   static Map<String, dynamic> _safeDecode(String body) {
     try {

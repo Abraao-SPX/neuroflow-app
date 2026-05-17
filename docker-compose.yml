@@ -12,6 +12,30 @@ services:
       - mysql_data:/var/lib/mysql
       # O MySQL no Docker roda automaticamente arquivos .sql contidos nessa pasta ao inicializar
       - ./backend/database:/docker-entrypoint-initdb.d
+    networks:
+      - neuroflow-net
+
+  backend:
+    build:
+      context: ./backend
+    container_name: neuroflow-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=neuroflow_db
+      - JWT_SECRET=sua_chave_jwt_secreta_e_segura
+    depends_on:
+      - db
+    networks:
+      - neuroflow-net
+
+networks:
+  neuroflow-net:
 
 volumes:
   mysql_data:
