@@ -25,7 +25,7 @@ class AdminController {
 
             // Remove user's tasks first (or handle cascade delete in sql if configured)
             // It's safer to do it manually if we are not sure about cascade setup
-            await db.execute('DELETE FROM Tarefas WHERE user_id = ?', [id]);
+            await db.execute('DELETE FROM Tarefas WHERE usuario_id = ?', [id]);
             
             // Delete user
             const deleteQuery = 'DELETE FROM Usuarios WHERE id = ?';
