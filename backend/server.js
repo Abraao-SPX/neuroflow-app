@@ -5,6 +5,7 @@ const sequelize = require('./src/config/sequelize');
 require('./src/models/UserModel');
 require('./src/models/TaskSequelizeModel');
 require('./src/models/RefreshTokenModel');
+require('./src/models/CheckinModel'); // Model de check-in
 const ensureAuthSchema = require('./src/database/ensureAuthSchema');
 const {
     getJwtSecret,
@@ -17,6 +18,7 @@ const AuthController = require('./src/controllers/AuthController');
 const taskRoutes = require('./src/routes/taskRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
+const checkinRoutes = require('./src/routes/checkinRoutes'); // Rotas de check-in
 
 const app = express();
 app.use(cors());
@@ -26,6 +28,7 @@ app.use(express.json());
 app.use('/api/tasks', taskRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/checkins', checkinRoutes); // Rota base de check-in
 app.get('/protected', authMiddleware, AuthController.protected);
 
 const PORT = process.env.PORT || 3000;

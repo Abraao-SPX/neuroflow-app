@@ -1,40 +1,78 @@
 import 'package:flutter/material.dart';
+import '../../data/services/checkin_service.dart';
+import '../widgets/custom_drawer.dart';
+import 'analytics_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  // 1. Mudamos para StatefulWidget
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // 2. Variáveis para guardar o estado (o que foi selecionado)
+  String selectedMood = ''; // Guarda apenas um humor
+  List<String> selectedTriggers = []; // Guarda vários gatilhos
+
+  @override
   Widget build(BuildContext context) {
-    // Cores baseadas na sua imagem
-    const Color bgHeader = Color(0xFFD1E3E7); // Verde água do topo
-    const Color bgBody = Color(0xFFFDF9F0);   // Bege clarinho do fundo
-    const Color selectedGreen = Color(0xFFB4E1B5); // Verde do emoji selecionado
+    const Color bgHeader = Color(0xFFD1E3E7);
+    const Color bgBody = Color(0xFFFDF9F0);
+    const Color selectedGreen = Color(0xFFB4E1B5);
 
     return Scaffold(
       backgroundColor: bgBody,
-      body: SingleChildScrollView( // Adicionado para permitir rolar a tela
+      endDrawer: const CustomDrawer(),
+      body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- PARTE 1: CABEÇALHO ---
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.only(top: 60, bottom: 30),
+              padding: const EdgeInsets.only(
+                top: 60,
+                bottom: 30,
+                left: 20,
+                right: 20,
+              ),
               decoration: const BoxDecoration(
                 color: bgHeader,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-              ),
-              child: const Center(
-                child: Text(
-                  'Daily Check-in',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4A6572),
-                  ),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(30),
                 ),
               ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Text(
+                    'Daily Check-in',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A6572),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    child: Builder(
+                      builder: (context) {
+                        return IconButton(
+                          icon: const Icon(
+                            Icons.menu,
+                            color: Color(0xFF4A6572),
+                            size: 30,
+                          ),
+                          onPressed: () {
+                            Scaffold.of(context).openEndDrawer();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -42,11 +80,7 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   const Text(
                     'Como você está se sentindo hoje?',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 20),
 
@@ -62,45 +96,105 @@ class HomeScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 30),
-
                   const Text(
                     'O que está te incomodando agora?',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 15),
 
                   // --- LISTA DE GATILHOS ---
-                  _buildTriggerItem(Icons.wb_sunny_outlined, 'Luz do dia excessiva'),
-                  _buildTriggerItem(Icons.volume_up_outlined, 'Ruídos e Barulhos'),
-                  _buildTriggerItem(Icons.assignment_outlined, 'Excesso de tarefas'),
-                  _buildTriggerItem(Icons.front_hand_outlined, 'Toques indesejados'),
-                  _buildTriggerItem(Icons.psychology_outlined, 'Dificuldade de concentração'),
+                  _buildTriggerItem(
+                    Icons.wb_sunny_outlined,
+                    'Luz do dia excessiva',
+                  ),
+                  _buildTriggerItem(
+                    Icons.volume_up_outlined,
+                    'Ruídos e Barulhos',
+                  ),
+                  _buildTriggerItem(
+                    Icons.assignment_outlined,
+                    'Excesso de tarefas',
+                  ),
+                  _buildTriggerItem(
+                    Icons.front_hand_outlined,
+                    'Toques indesejados',
+                  ),
+                  _buildTriggerItem(
+                    Icons.psychology_outlined,
+                    'Dificuldade de concentração',
+                  ),
 
                   const SizedBox(height: 30),
 
-                  // --- BOTÃO SALVAR ---
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      if (selectedMood.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Selecione um humor primeiro!'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      try {
+                        await CheckinService.salvarCheckin(
+                          selectedMood,
+                          selectedTriggers,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Check-in salvo com sucesso!'),
+                          ),
+                        );
+                        // Limpar o form após salvar
+                        setState(() {
+                          selectedMood = '';
+                          selectedTriggers.clear();
+                        });
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erro ao salvar: $e')),
+                        );
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFD1E3E7),
                       foregroundColor: const Color(0xFF4A6572),
                       minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
-                        side: const BorderSide(color: Colors.black12),
                       ),
-                      elevation: 0,
                     ),
                     child: const Text(
                       "Salvar Check-in",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const SizedBox(height: 20), // Espaço extra no final
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AnalyticsScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF4A6572),
+                      minimumSize: const Size(double.infinity, 55),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        side: const BorderSide(color: Color(0xFF4A6572)),
+                      ),
+                    ),
+                    child: const Text(
+                      "Ver Histórico de Dias",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -110,50 +204,94 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- FUNÇÕES AUXILIARES (Ficam fora do build, mas dentro da classe) ---
+  // --- FUNÇÕES AUXILIARES COM LÓGICA DE CLIQUE ---
 
-  Widget _buildTriggerItem(IconData icon, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: const Color(0xFF4A6572)),
-            const SizedBox(width: 15),
-            Text(label, style: const TextStyle(fontSize: 15)),
-          ],
-        ),
+  Widget _buildMoodItem(String label, String emoji, Color activeColor) {
+    bool isSelected = selectedMood == label;
+
+    return GestureDetector(
+      // Detecta o toque
+      onTap: () {
+        setState(() {
+          selectedMood = label; // Atualiza a tela
+        });
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? activeColor
+                  : Colors.white, // Muda a cor se selecionado
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.green.withOpacity(0.5)
+                    : Colors.black12,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 30)),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isSelected ? Colors.black : Colors.black54,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMoodItem(String label, String emoji, Color bgColor) {
-    return Column(
-      children: [
-        Container(
+  Widget _buildTriggerItem(IconData icon, String label) {
+    bool isSelected = selectedTriggers.contains(label);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            if (isSelected) {
+              selectedTriggers.remove(label); // Desmarca se já estiver marcado
+            } else {
+              selectedTriggers.add(label); // Marca se estiver desmarcado
+            }
+          });
+        },
+        child: Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colors.black12),
+            color: isSelected ? const Color(0xFFB4E1B5) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.green.withOpacity(0.5)
+                  : Colors.black12,
+            ),
           ),
-          child: Text(
-            emoji,
-            style: const TextStyle(fontSize: 30),
+          child: Row(
+            children: [
+              Icon(icon, color: const Color(0xFF4A6572)),
+              const SizedBox(width: 15),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              if (isSelected)
+                const Icon(Icons.check_circle, color: Colors.green, size: 20),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-      ],
+      ),
     );
   }
 }
