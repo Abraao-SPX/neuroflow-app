@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'data/services/password_reset_session.dart';
 import 'providers/auth_provider.dart';
 import 'presentation/screens/onboarding_screen.dart';
 import 'presentation/screens/login_screen.dart';
@@ -29,15 +30,30 @@ class MyApp extends StatelessWidget {
         ),
         home: Consumer<AuthProvider>(
           builder: (context, authProvider, _) {
-            if (!authProvider.isLoggedIn) {
-              return const OnboardingScreen();
-            }
+            return FutureBuilder<bool>(
+              future: PasswordResetSession.hasPendingReset(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-            if (authProvider.user?['role'] == 'admin') {
-              return const AdminDashboardScreen();
-            }
+                if (snapshot.data == true) {
+                  return const ForgotPasswordScreen();
+                }
 
-            return const HomeScreen();
+                if (!authProvider.isLoggedIn) {
+                  return const OnboardingScreen();
+                }
+
+                if (authProvider.user?['role'] == 'admin') {
+                  return const AdminDashboardScreen();
+                }
+
+                return const HomeScreen();
+              },
+            );
           },
         ),
         routes: {

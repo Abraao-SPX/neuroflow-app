@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/password_reset_session.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -16,6 +17,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   String? _errorMessage;
   bool _tokenSent = false;
   final Color primaryColor = const Color(0xFF4F46E5);
+
+  @override
+  void initState() {
+    super.initState();
+    _restorePendingReset();
+  }
+
+  Future<void> _restorePendingReset() async {
+    final pendingReset = await PasswordResetSession.restore();
+    if (!mounted || pendingReset == null) return;
+
+    setState(() {
+      _emailController.text = pendingReset.email;
+      _tokenSent = true;
+      if (pendingReset.token != null && pendingReset.token!.isNotEmpty) {
+        _tokenController.text = pendingReset.token!;
+      }
+    });
+  }
+
+  Future<void> _savePendingReset(Map<String, dynamic> result) async {
+    final token = result['token'];
+    await PasswordResetSession.save(
+      email: _emailController.text,
+      token: token is String ? token : null,
+    );
+  }
+
+  Future<void> _clearPendingReset() async {
+    await PasswordResetSession.clear();
+  }
 
   @override
   void dispose() {
@@ -41,6 +73,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     try {
       final result = await AuthService.forgotPassword(_emailController.text);
       if (mounted) {
+        await _savePendingReset(result);
+        if (!mounted) return;
         setState(() {
           _tokenSent = true;
           // Automagicamente preenchemos o token para MVP
@@ -73,9 +107,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -105,15 +141,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       );
 
       if (mounted) {
+        await _clearPendingReset();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'] ?? 'Senha atualizada!')),
         );
         Navigator.pop(context); // Voltar para login
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {

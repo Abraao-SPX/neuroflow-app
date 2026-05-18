@@ -12,6 +12,11 @@ function shouldReturnResetTokenInResponse() {
     return process.env.NODE_ENV !== 'production';
 }
 
+function getResetTokenExpirationMs() {
+    const minutes = Number.parseInt(process.env.RESET_TOKEN_EXPIRATION_MINUTES || '5', 10);
+    return (Number.isNaN(minutes) ? 5 : minutes) * 60 * 1000;
+}
+
 class AuthController {
     static async register(req, res) {
         try {
@@ -107,9 +112,14 @@ class AuthController {
                 return res.status(200).json({ success: true, message: 'Se o e-mail estiver cadastrado, as instrucoes foram enviadas.' });
             }
 
-            const token = crypto.randomBytes(32).toString('hex');
-            const expires = new Date(Date.now() + 3600000);
+            const now = new Date();
+            let token = user.resetToken;
+            let expires = user.resetTokenExpires ? new Date(user.resetTokenExpires) : null;
 
+            if (!token || !expires || expires <= now) {
+                token = crypto.randomBytes(32).toString('hex');
+            }
+            expires = new Date(Date.now() + getResetTokenExpirationMs());
             await UserModel.updateResetToken(user.id, token, expires);
 
             const response = { success: true, message: 'Se o e-mail estiver cadastrado, as instrucoes foram enviadas.' };

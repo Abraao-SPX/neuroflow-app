@@ -34,6 +34,7 @@ services:
       - TOKEN_EXPIRATION=1h
       - REFRESH_TOKEN_SECRET=sua_chave_refresh_secreta_e_segura
       - REFRESH_TOKEN_EXPIRATION=30d
+      - RESET_TOKEN_EXPIRATION_MINUTES=5
     depends_on:
       - db
     networks:
