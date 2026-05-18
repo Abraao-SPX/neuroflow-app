@@ -24,6 +24,19 @@ class CustomDrawer extends StatelessWidget {
             ),
             const Divider(),
             ListTile(
+              leading: const Icon(Icons.person, color: Color(0xFF4A6572)),
+              title: const Text(
+                'Perfil',
+                style: TextStyle(
+                  color: Color(0xFF4A6572),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/profile');
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.home, color: Color(0xFF4A6572)),
               title: const Text(
                 'Home',
