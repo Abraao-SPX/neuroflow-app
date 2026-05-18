@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/services/password_reset_session.dart';
 
@@ -11,11 +12,11 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _tokenController = TextEditingController();
+  final TextEditingController _codeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
-  bool _tokenSent = false;
+  bool _codeSent = false;
   final Color primaryColor = const Color(0xFF4F46E5);
 
   @override
@@ -30,9 +31,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() {
       _emailController.text = pendingReset.email;
-      _tokenSent = true;
+      _codeSent = true;
       if (pendingReset.token != null && pendingReset.token!.isNotEmpty) {
-        _tokenController.text = pendingReset.token!;
+        _codeController.text = pendingReset.token!;
       }
     });
   }
@@ -52,12 +53,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   void dispose() {
     _emailController.dispose();
-    _tokenController.dispose();
+    _codeController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleRequestToken() async {
+  void _handleRequestCode() async {
     if (_emailController.text.isEmpty) {
       setState(() {
         _errorMessage = 'Por favor, insira seu e-mail.';
@@ -76,20 +77,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         await _savePendingReset(result);
         if (!mounted) return;
         setState(() {
-          _tokenSent = true;
-          // Automagicamente preenchemos o token para MVP
+          _codeSent = true;
           if (result['token'] != null) {
-            _tokenController.text = result['token'];
+            _codeController.text = result['token'];
 
-            // Exibir Modal de Simulação de Email para o Avaliador
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('📧 Caixa de Entrada (Simulação)'),
+                title: const Text('Caixa de Entrada'),
                 content: Text(
-                  'Este é um ambiente MVP. Na vida real o usuário receberia um email.\n\n'
-                  'Token gerado:\n${result['token']}\n\n'
-                  'O campo já foi preenchido automaticamente para você testar a troca.',
+                  'Este e um ambiente MVP. Na vida real o usuario receberia um email.\n\n'
+                  'Codigo gerado:\n${result['token']}\n\n'
+                  'O campo ja foi preenchido automaticamente para voce testar a troca.',
                 ),
                 actions: [
                   TextButton(
@@ -103,7 +102,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Instruções enviadas!')),
+          SnackBar(content: Text(result['message'] ?? 'Instrucoes enviadas!')),
         );
       }
     } catch (e) {
@@ -122,9 +121,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _handleResetPassword() async {
-    if (_tokenController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_codeController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        _errorMessage = 'Por favor, preencha o token e a nova senha.';
+        _errorMessage = 'Por favor, preencha o codigo e a nova senha.';
       });
       return;
     }
@@ -136,7 +135,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     try {
       final result = await AuthService.resetPassword(
-        _tokenController.text,
+        _codeController.text,
         _passwordController.text,
       );
 
@@ -146,7 +145,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'] ?? 'Senha atualizada!')),
         );
-        Navigator.pop(context); // Voltar para login
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -172,18 +171,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Recuperar Senha",
+            const Text(
+              'Recuperar Senha',
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Text(
-              _tokenSent
-                  ? "Insira o token e sua nova senha"
-                  : "Insira seu e-mail para receber as instruções",
+              _codeSent
+                  ? 'Insira o codigo de 6 numeros e sua nova senha'
+                  : 'Insira seu e-mail para receber as instrucoes',
             ),
             const SizedBox(height: 40),
-
             if (_errorMessage != null)
               Container(
                 padding: const EdgeInsets.all(12),
@@ -197,8 +195,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
             if (_errorMessage != null) const SizedBox(height: 20),
-
-            if (!_tokenSent) ...[
+            if (!_codeSent) ...[
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -219,22 +216,29 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: _isLoading ? null : _handleRequestToken,
+                  onPressed: _isLoading ? null : _handleRequestCode,
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          'Enviar Instruções',
+                          'Enviar Codigo',
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                 ),
               ),
             ] else ...[
               TextField(
-                controller: _tokenController,
+                controller: _codeController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(6),
+                ],
                 decoration: const InputDecoration(
-                  labelText: 'Token de Recuperação',
+                  labelText: 'Codigo de Recuperacao',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.key_outlined),
+                  counterText: '',
                 ),
               ),
               const SizedBox(height: 20),

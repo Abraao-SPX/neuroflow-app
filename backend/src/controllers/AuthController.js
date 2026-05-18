@@ -17,6 +17,10 @@ function getResetTokenExpirationMs() {
     return (Number.isNaN(minutes) ? 5 : minutes) * 60 * 1000;
 }
 
+function generateResetCode() {
+    return crypto.randomInt(100000, 1000000).toString();
+}
+
 class AuthController {
     static async register(req, res) {
         try {
@@ -116,8 +120,8 @@ class AuthController {
             let token = user.resetToken;
             let expires = user.resetTokenExpires ? new Date(user.resetTokenExpires) : null;
 
-            if (!token || !expires || expires <= now) {
-                token = crypto.randomBytes(32).toString('hex');
+            if (!token || !/^\d{6}$/.test(token) || !expires || expires <= now) {
+                token = generateResetCode();
             }
             expires = new Date(Date.now() + getResetTokenExpirationMs());
             await UserModel.updateResetToken(user.id, token, expires);
@@ -146,12 +150,12 @@ class AuthController {
         try {
             const { token, newPassword } = req.body;
             if (!token || !newPassword) {
-                return res.status(400).json({ success: false, message: 'Token e nova password sao obrigatorios.' });
+                return res.status(400).json({ success: false, message: 'Codigo e nova password sao obrigatorios.' });
             }
 
             const user = await UserModel.findByResetToken(token);
             if (!user) {
-                return res.status(400).json({ success: false, message: 'Token invalido ou expirado.' });
+                return res.status(400).json({ success: false, message: 'Codigo invalido ou expirado.' });
             }
 
             await UserModel.updatePassword(user.id, newPassword);

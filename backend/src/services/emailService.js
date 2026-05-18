@@ -48,15 +48,15 @@ async function sendPasswordResetEmail({ to, token, expires }) {
         text: [
             'Voce solicitou a recuperacao de senha no NeuroFlow.',
             '',
-            `Token de recuperacao: ${token}`,
+            `Codigo de recuperacao: ${token}`,
             `Valido ate: ${expiresAt}`,
             '',
             'Se voce nao solicitou essa recuperacao, ignore este email.'
         ].join('\n'),
         html: `
             <p>Voce solicitou a recuperacao de senha no NeuroFlow.</p>
-            <p><strong>Token de recuperacao:</strong></p>
-            <p style="font-size: 18px; letter-spacing: 1px;"><code>${token}</code></p>
+            <p><strong>Codigo de recuperacao:</strong></p>
+            <p style="font-size: 28px; letter-spacing: 6px;"><strong>${token}</strong></p>
             <p><strong>Valido ate:</strong> ${expiresAt}</p>
             <p>Se voce nao solicitou essa recuperacao, ignore este email.</p>
         `
