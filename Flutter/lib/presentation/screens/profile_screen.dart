@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/custom_drawer.dart';
+import '../../providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -8,6 +10,13 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF1A434E); // Azul escuro dos textos
     const Color accentColor = Color(0xFF64B5F6); // Azul claro dos ícones
+
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
+    final String userName =
+        user?['username'] ?? user?['name'] ?? 'Carregando...';
+    final String userEmail = user?['email'] ?? 'Carregando...';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF9F0), // Bege de fundo
@@ -104,20 +113,14 @@ class ProfileScreen extends StatelessWidget {
 
                               // Campos de Informação
                               _buildProfileField(
-                                'Nome',
-                                'Ana Clara',
-                                Icons.person_outline,
-                                accentColor,
-                              ),
-                              _buildProfileField(
-                                'Nome de usuário',
-                                'anaclara123',
+                                'Nome / Usuário',
+                                userName,
                                 Icons.person_outline,
                                 accentColor,
                               ),
                               _buildProfileField(
                                 'E-mail',
-                                'anaclara@email.com',
+                                userEmail,
                                 Icons.mail_outline,
                                 accentColor,
                               ),

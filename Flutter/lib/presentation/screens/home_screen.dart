@@ -171,29 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AnalyticsScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF4A6572),
-                      minimumSize: const Size(double.infinity, 55),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        side: const BorderSide(color: Color(0xFF4A6572)),
-                      ),
-                    ),
-                    child: const Text(
-                      "Ver Histórico de Dias",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
                   const SizedBox(height: 20),
                 ],
               ),
