@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'presentation/screens/onboarding_screen.dart';
 import 'presentation/screens/login_screen.dart';
+import 'presentation/screens/forgot_password_screen.dart';
 import 'presentation/screens/support_screen.dart';
 import 'presentation/screens/register_screen.dart';
 import 'presentation/screens/home_screen.dart';
@@ -69,6 +70,7 @@ class MyApp extends StatelessWidget {
 
       routes: {
         '/login': (context) => const LoginScreen(),
+        '/forgot_password': (context) => const ForgotPasswordScreen(),
         '/register': (context) => const RegisterScreen(),
         '/support': (context) => const SupportScreen(),
         '/home': (context) => const HomeScreen(),
