@@ -26,6 +26,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });

@@ -33,7 +33,7 @@ class ProfileScreen extends StatelessWidget {
               child: Icon(
                 Icons.eco,
                 size: 250,
-                color: Colors.green.withOpacity(0.2),
+                color: Colors.green.withValues(alpha: 0.2),
               ),
             ),
           ),
@@ -86,7 +86,7 @@ class ProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(25),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
+                                color: Colors.black.withValues(alpha: 0.03),
                                 blurRadius: 15,
                                 offset: const Offset(0, 5),
                               ),
@@ -165,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.black.withOpacity(0.08)),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
             ),
             child: Row(
               children: [

@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
                 color: isSelected
-                    ? Colors.green.withOpacity(0.5)
+                    ? Colors.green.withValues(alpha: 0.5)
                     : Colors.black12,
                 width: isSelected ? 2 : 1,
               ),
@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? Colors.green.withOpacity(0.5)
+                  ? Colors.green.withValues(alpha: 0.5)
                   : Colors.black12,
             ),
           ),

@@ -28,6 +28,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -130,7 +131,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                         margin: const EdgeInsets.only(bottom: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
-                          side: BorderSide(color: textColor.withOpacity(0.2)),
+                          side: BorderSide(color: textColor.withValues(alpha: 0.2)),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
