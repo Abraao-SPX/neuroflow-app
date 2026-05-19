@@ -14,6 +14,8 @@ test('parsePositiveInteger accepts only positive integer ids', () => {
     assert.equal(parsePositiveInteger('42'), 42);
     assert.equal(parsePositiveInteger('0'), null);
     assert.equal(parsePositiveInteger('-1'), null);
+    assert.equal(parsePositiveInteger('42.5'), null);
+    assert.equal(parsePositiveInteger('1abc'), null);
     assert.equal(parsePositiveInteger('abc'), null);
 });
 

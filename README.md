@@ -65,14 +65,18 @@ Variaveis principais:
 | --- | --- |
 | `PORT` | Porta HTTP da API |
 | `DB_HOST` | Host do MySQL |
+| `DB_PORT` | Porta do MySQL |
 | `DB_USER` | Usuario do MySQL |
 | `DB_PASSWORD` | Senha do MySQL |
 | `DB_NAME` | Nome do banco |
+| `DB_TEST_NAME` | Nome do banco usado por testes de integracao |
+| `DB_SSL` | Habilita SSL na conexao MySQL |
+| `DB_SSL_REJECT_UNAUTHORIZED` | Valida ou ignora autoridade do certificado SSL |
 | `JWT_SECRET` | Segredo do access token |
 | `TOKEN_EXPIRATION` | Expiracao do access token |
 | `REFRESH_TOKEN_SECRET` | Segredo do refresh token |
 | `REFRESH_TOKEN_EXPIRATION` | Expiracao do refresh token |
-| `CORS_ORIGINS` | Origens permitidas separadas por virgula |
+| `CORS_ORIGINS` | Origens permitidas separadas por virgula. Aceita porta curinga com `:*`, por exemplo `http://localhost:*` |
 | `MAIL_*` | Configuracao SMTP para recuperacao de senha |
 
 ## Rodando localmente
@@ -108,7 +112,7 @@ O Compose exige segredos via variaveis de ambiente. Exemplo:
 DB_PASSWORD="senha-forte-do-mysql" \
 JWT_SECRET="access-token-secret-com-mais-de-32-caracteres" \
 REFRESH_TOKEN_SECRET="refresh-token-secret-diferente-com-32-caracteres" \
-CORS_ORIGINS="http://localhost:3000,http://localhost:5173,http://10.0.2.2:3000" \
+CORS_ORIGINS="http://localhost:*,http://127.0.0.1:*,http://10.0.2.2:3000,http://18.229.149.163:*" \
 docker compose up --build
 ```
 
@@ -214,7 +218,7 @@ Detalhes em [docs/DATABASE.md](docs/DATABASE.md).
 - Rotas privadas usam `Authorization: Bearer <token>`.
 - Rotas administrativas exigem `role=admin`.
 - Endpoints sensiveis de auth possuem rate limit.
-- CORS usa allowlist via `CORS_ORIGINS`.
+- CORS usa allowlist via `CORS_ORIGINS`. Para Flutter Web em desenvolvimento, inclua `http://localhost:*` porque a porta do navegador pode mudar.
 
 ## Flutter
 

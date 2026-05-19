@@ -25,12 +25,38 @@ function getAllowedOrigins() {
     ];
 }
 
+function isWildcardPortMatch(allowedOrigin, requestOrigin) {
+    if (!allowedOrigin.endsWith(':*')) {
+        return false;
+    }
+
+    try {
+        const allowedUrl = new URL(allowedOrigin.slice(0, -2));
+        const requestUrl = new URL(requestOrigin);
+
+        return allowedUrl.protocol === requestUrl.protocol
+            && allowedUrl.hostname === requestUrl.hostname;
+    } catch (_) {
+        return false;
+    }
+}
+
+function isOriginAllowed(origin, allowedOrigins) {
+    if (!origin) {
+        return true;
+    }
+
+    return allowedOrigins.some((allowedOrigin) => {
+        return allowedOrigin === origin || isWildcardPortMatch(allowedOrigin, origin);
+    });
+}
+
 function getCorsOptions() {
     const allowedOrigins = getAllowedOrigins();
 
     return {
         origin(origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) {
+            if (isOriginAllowed(origin, allowedOrigins)) {
                 return callback(null, true);
             }
 
@@ -45,5 +71,6 @@ function getCorsOptions() {
 
 module.exports = {
     getAllowedOrigins,
-    getCorsOptions
+    getCorsOptions,
+    isOriginAllowed
 };

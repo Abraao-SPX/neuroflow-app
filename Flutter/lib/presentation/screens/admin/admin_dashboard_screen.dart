@@ -89,6 +89,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  int? _readUserId(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is String) {
+      return int.tryParse(value);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,6 +140,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     DataColumn(label: Text('Ações')),
                   ],
                   rows: _users.map((user) {
+                    final userId = _readUserId(user['id']);
                     final created = user['created_at'] != null
                         ? DateTime.tryParse(user['created_at'].toString())
                         : null;
@@ -145,9 +156,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         DataCell(
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: user['role'] == 'admin'
+                            onPressed: user['role'] == 'admin' || userId == null
                                 ? null
-                                : () => _deleteUser(user['id']),
+                                : () => _deleteUser(userId),
                             tooltip: 'Apagar conta',
                           ),
                         ),

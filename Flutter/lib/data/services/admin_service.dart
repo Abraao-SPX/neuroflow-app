@@ -50,12 +50,11 @@ class AdminService {
       }
     }
 
-    if (response.statusCode != 200) {
-      final data = jsonDecode(response.body);
-      throw Exception(
-        data['message'] ?? data['error'] ?? 'Failed to delete user',
-      );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
     }
+
+    throw Exception(_extractErrorMessage(response, 'Falha ao apagar usuario'));
   }
 
   Future<http.Response> _getUsersWithToken(String token) {
@@ -76,5 +75,31 @@ class AdminService {
         'Authorization': 'Bearer $token',
       },
     );
+  }
+
+  String _extractErrorMessage(http.Response response, String fallback) {
+    final body = response.body.trim();
+    if (body.isEmpty) {
+      return '$fallback (${response.statusCode})';
+    }
+
+    try {
+      final data = jsonDecode(body);
+      if (data is Map<String, dynamic>) {
+        final message = data['message'] ?? data['error'];
+        if (message is String && message.trim().isNotEmpty) {
+          return message;
+        }
+      }
+      if (data is String && data.trim().isNotEmpty) {
+        return data;
+      }
+    } on FormatException {
+      if (body.length <= 160) {
+        return body;
+      }
+    }
+
+    return '$fallback (${response.statusCode})';
   }
 }

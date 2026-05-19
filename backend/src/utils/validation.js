@@ -3,7 +3,11 @@ function isPlainObject(value) {
 }
 
 function parsePositiveInteger(value) {
-    const parsed = Number.parseInt(value, 10);
+    if (!/^\d+$/.test(String(value))) {
+        return null;
+    }
+
+    const parsed = Number(value);
     return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 

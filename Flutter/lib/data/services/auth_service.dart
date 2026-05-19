@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,7 @@ class AuthService {
   static const String _authTokenKey = 'auth_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userKey = 'cached_user';
+  static const Duration _requestTimeout = Duration(seconds: 20);
   static String? _sessionToken;
   static Map<String, dynamic>? _currentUser;
 
@@ -25,17 +27,37 @@ class AuthService {
     return {};
   }
 
+  static Future<http.Response> _postJson(
+    Uri url,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      return await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(_requestTimeout);
+    } on TimeoutException {
+      throw Exception('Tempo esgotado ao conectar com a API.');
+    } on http.ClientException {
+      throw Exception(
+        'Nao foi possivel conectar com a API. Verifique se o servidor esta online e se o CORS permite este app.',
+      );
+    }
+  }
+
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
   ) async {
     final url = Uri.parse('$baseUrl/login');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
+    final response = await _postJson(url, {
+      'email': email,
+      'password': password,
+    });
 
     final data = _safeDecode(response.body);
 
@@ -59,11 +81,11 @@ class AuthService {
   ) async {
     final url = Uri.parse('$baseUrl/register');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name, 'email': email, 'password': password}),
-    );
+    final response = await _postJson(url, {
+      'name': name,
+      'email': email,
+      'password': password,
+    });
 
     final data = _safeDecode(response.body);
 
@@ -148,11 +170,9 @@ class AuthService {
       return null;
     }
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/refresh'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'refreshToken': refreshToken}),
-    );
+    final response = await _postJson(Uri.parse('$baseUrl/refresh'), {
+      'refreshToken': refreshToken,
+    });
 
     final data = _safeDecode(response.body);
     if (response.statusCode == 200) {
@@ -176,11 +196,9 @@ class AuthService {
     final refreshToken = prefs.getString(_refreshTokenKey);
     if (refreshToken != null && refreshToken.isNotEmpty) {
       try {
-        await http.post(
-          Uri.parse('$baseUrl/logout'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'refreshToken': refreshToken}),
-        );
+        await _postJson(Uri.parse('$baseUrl/logout'), {
+          'refreshToken': refreshToken,
+        });
       } catch (_) {
         // Logout local ainda deve funcionar mesmo sem conexao.
       }
@@ -194,11 +212,7 @@ class AuthService {
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
     final url = Uri.parse('$baseUrl/forgot-password');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
-    );
+    final response = await _postJson(url, {'email': email});
 
     final data = _safeDecode(response.body);
 
@@ -217,11 +231,10 @@ class AuthService {
   ) async {
     final url = Uri.parse('$baseUrl/reset-password');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'token': token, 'newPassword': newPassword}),
-    );
+    final response = await _postJson(url, {
+      'token': token,
+      'newPassword': newPassword,
+    });
 
     final data = _safeDecode(response.body);
 
