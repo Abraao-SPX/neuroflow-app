@@ -33,6 +33,20 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
+      builder: (context, child) {
+        return Container(
+          color: const Color(0xFFE5E7EB), // Fundo suave para telas maiores
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 500,
+              ), // Redimensiona e limita o layout para parecer app mobile
+              child: ClipRect(child: child!),
+            ),
+          ),
+        );
+      },
+
       home: const OnboardingScreen(),
 
       routes: {
