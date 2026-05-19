@@ -117,6 +117,19 @@ async function resolveTriggers(normalizedTriggers, transaction) {
 function mapCheckin(checkin) {
     const plain = checkin.toJSON ? checkin.toJSON() : checkin;
     const triggers = plain.triggers || [];
+    const uniqueTriggers = [];
+    const seenTriggerIds = new Set();
+    const seenTriggerNames = new Set();
+
+    for (const trigger of triggers) {
+        if (seenTriggerIds.has(trigger.id) || seenTriggerNames.has(trigger.nome)) {
+            continue;
+        }
+
+        seenTriggerIds.add(trigger.id);
+        seenTriggerNames.add(trigger.nome);
+        uniqueTriggers.push(trigger);
+    }
 
     return {
         id: plain.id,
@@ -126,8 +139,8 @@ function mapCheckin(checkin) {
         data_checkin: plain.dataCheckin,
         createdAt: plain.createdAt,
         updatedAt: plain.updatedAt,
-        gatilhos: triggers.map((trigger) => trigger.nome),
-        gatilhoIds: triggers.map((trigger) => trigger.id)
+        gatilhos: uniqueTriggers.map((trigger) => trigger.nome),
+        gatilhoIds: uniqueTriggers.map((trigger) => trigger.id)
     };
 }
 
