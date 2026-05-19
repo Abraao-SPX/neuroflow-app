@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/services/checkin_service.dart';
 import '../widgets/custom_drawer.dart';
-import 'analytics_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   // 1. Mudamos para StatefulWidget
@@ -142,6 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           selectedMood,
                           selectedTriggers,
                         );
+
+                        if (!context.mounted) return;
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Check-in salvo com sucesso!'),
@@ -153,6 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           selectedTriggers.clear();
                         });
                       } catch (e) {
+                        if (!context.mounted) return;
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Erro ao salvar: $e')),
                         );

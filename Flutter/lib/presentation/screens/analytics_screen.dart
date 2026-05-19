@@ -90,7 +90,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             'Gatilhos enfrentados:',
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          ...gatilhos.map((g) => Text('• $g')).toList(),
+                          ...gatilhos.map((g) => Text('• $g')),
                         ],
                       ],
                     ),
