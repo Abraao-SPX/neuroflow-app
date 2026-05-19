@@ -15,6 +15,56 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedMood = ''; // Guarda apenas um humor
   List<String> selectedTriggers = []; // Guarda vários gatilhos
 
+  bool _isSaving = false;
+
+  Future<void> _handleSaveCheckin() async {
+    if (selectedMood.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione um humor primeiro!')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await CheckinService.salvarCheckin(selectedMood, selectedTriggers);
+
+      if (!mounted) return;
+
+      setState(() {
+        selectedMood = '';
+        selectedTriggers.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seu check-in foi salvo com sucesso!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color bgHeader = Color(0xFFD1E3E7);
@@ -126,52 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 30),
 
                   ElevatedButton(
-                    onPressed: () async {
-                      if (selectedMood.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Selecione um humor primeiro!'),
-                          ),
-                        );
-                        return;
-                      }
-
-                      try {
-                        await CheckinService.salvarCheckin(
-                          selectedMood,
-                          selectedTriggers,
-                        );
-
-                        if (!mounted) return;
-
-                        // Limpar o form após salvar
-                        setState(() {
-                          selectedMood = '';
-                          selectedTriggers.clear();
-                        });
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Seu check-in foi salvo com sucesso!',
-                            ),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior
-                                .floating, // Aparece "flutuando" na parte de baixo
-                          ),
-                        );
-                      } catch (e) {
-                        if (!mounted) return;
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Erro ao salvar: $e'),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: _isSaving ? null : _handleSaveCheckin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFD1E3E7),
                       foregroundColor: const Color(0xFF4A6572),
@@ -180,10 +185,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
-                    child: const Text(
-                      "Salvar Check-in",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            "Salvar Check-in",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                   ),
                   const SizedBox(height: 20),
                 ],

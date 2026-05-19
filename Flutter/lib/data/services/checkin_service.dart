@@ -10,6 +10,7 @@ class CheckinService {
     final token = await AuthService.getStoredToken();
     if (token == null) throw Exception('Não autenticado');
 
+    final gatilhosUnicos = gatilhos.toSet().toList();
     final url = Uri.parse(baseUrl);
     final response = await http.post(
       url,
@@ -17,7 +18,7 @@ class CheckinService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({'humor': humor, 'gatilhos': gatilhos}),
+      body: jsonEncode({'humor': humor, 'gatilhos': gatilhosUnicos}),
     );
 
     if (response.statusCode != 201) {

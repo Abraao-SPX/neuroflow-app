@@ -38,6 +38,21 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
     }
   }
 
+  List<String> _uniqueStrings(dynamic value) {
+    if (value is! List) return [];
+
+    final seen = <String>{};
+    final result = <String>[];
+    for (final item in value) {
+      final text = item.toString().trim();
+      if (text.isEmpty || seen.contains(text)) continue;
+      seen.add(text);
+      result.add(text);
+    }
+
+    return result;
+  }
+
   String _formatDateTime(String? dateStr, String? createdAt) {
     if (createdAt == null) return dateStr ?? '';
     try {
@@ -124,7 +139,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                         item['createdAt'],
                       );
                       final humor = item['humor'];
-                      final List gatilhos = item['gatilhos'] ?? [];
+                      final gatilhos = _uniqueStrings(item['gatilhos']);
 
                       return Card(
                         elevation: 0,
