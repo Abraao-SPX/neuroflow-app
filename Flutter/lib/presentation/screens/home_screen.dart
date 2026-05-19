@@ -142,23 +142,42 @@ class _HomeScreenState extends State<HomeScreen> {
                           selectedTriggers,
                         );
 
-                        if (!context.mounted) return;
+                        if (!mounted) return;
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Check-in salvo com sucesso!'),
-                          ),
-                        );
                         // Limpar o form após salvar
                         setState(() {
                           selectedMood = '';
                           selectedTriggers.clear();
                         });
-                      } catch (e) {
-                        if (!context.mounted) return;
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Erro ao salvar: $e')),
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Sucesso!'),
+                            content: const Text('Check-in salvo com sucesso!'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Erro'),
+                            content: Text('Erro ao salvar: $e'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
                         );
                       }
                     },
