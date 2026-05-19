@@ -154,11 +154,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           context: context,
                           barrierDismissible: false,
                           builder: (context) {
-                            Future.delayed(const Duration(seconds: 3), () {
-                              if (context.mounted) {
-                                Navigator.of(context).pop();
-                              }
-                            });
+                            Future.delayed(
+                              const Duration(milliseconds: 1500),
+                              () {
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                            );
                             return const AlertDialog(
                               title: Text(
                                 'Sucesso!',
@@ -178,11 +181,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           context: context,
                           barrierDismissible: false,
                           builder: (context) {
-                            Future.delayed(const Duration(seconds: 3), () {
-                              if (context.mounted) {
-                                Navigator.of(context).pop();
-                              }
-                            });
+                            Future.delayed(
+                              const Duration(milliseconds: 1500),
+                              () {
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                            );
                             return AlertDialog(
                               title: const Text(
                                 'Erro',
