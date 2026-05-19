@@ -152,32 +152,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         showDialog(
                           context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Sucesso!'),
-                            content: const Text('Check-in salvo com sucesso!'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('OK'),
+                          barrierDismissible: false,
+                          builder: (context) {
+                            Future.delayed(const Duration(seconds: 3), () {
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            });
+                            return const AlertDialog(
+                              title: Text(
+                                'Sucesso!',
+                                textAlign: TextAlign.center,
                               ),
-                            ],
-                          ),
+                              content: Text(
+                                'Check-in salvo com sucesso!',
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          },
                         );
                       } catch (e) {
                         if (!mounted) return;
 
                         showDialog(
                           context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Erro'),
-                            content: Text('Erro ao salvar: $e'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('OK'),
+                          barrierDismissible: false,
+                          builder: (context) {
+                            Future.delayed(const Duration(seconds: 3), () {
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            });
+                            return AlertDialog(
+                              title: const Text(
+                                'Erro',
+                                textAlign: TextAlign.center,
                               ),
-                            ],
-                          ),
+                              content: Text(
+                                'Erro ao salvar: $e',
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          },
                         );
                       }
                     },
