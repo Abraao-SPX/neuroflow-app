@@ -20,8 +20,8 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF9F0), // Bege de fundo
-      drawer:
-          const CustomDrawer(), // Menu lateral que será aberto pelos 3 tracinhos
+      endDrawer:
+          const CustomDrawer(), // Menu lateral que será aberto pelos 3 tracinhos na direita
       body: Stack(
         children: [
           // Decoração de fundo (estilo aquarela/folhas)
@@ -43,9 +43,9 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 // Barra de Topo apenas com o Menu Hambúrguer
                 Padding(
-                  padding: const EdgeInsets.only(left: 10, top: 10),
+                  padding: const EdgeInsets.only(right: 10, top: 10),
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.centerRight,
                     child: Builder(
                       builder: (context) => IconButton(
                         icon: const Icon(
@@ -53,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
                           color: primaryColor,
                           size: 30,
                         ),
-                        onPressed: () => Scaffold.of(context).openDrawer(),
+                        onPressed: () => Scaffold.of(context).openEndDrawer(),
                       ),
                     ),
                   ),
