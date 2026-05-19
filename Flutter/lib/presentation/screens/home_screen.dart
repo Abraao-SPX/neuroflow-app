@@ -150,56 +150,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           selectedTriggers.clear();
                         });
 
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) {
-                            Future.delayed(
-                              const Duration(milliseconds: 1500),
-                              () {
-                                if (context.mounted) {
-                                  Navigator.of(context).pop();
-                                }
-                              },
-                            );
-                            return const AlertDialog(
-                              title: Text(
-                                'Sucesso!',
-                                textAlign: TextAlign.center,
-                              ),
-                              content: Text(
-                                'Check-in salvo com sucesso!',
-                                textAlign: TextAlign.center,
-                              ),
-                            );
-                          },
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Seu check-in foi salvo com sucesso!',
+                            ),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior
+                                .floating, // Aparece "flutuando" na parte de baixo
+                          ),
                         );
                       } catch (e) {
                         if (!mounted) return;
 
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) {
-                            Future.delayed(
-                              const Duration(milliseconds: 1500),
-                              () {
-                                if (context.mounted) {
-                                  Navigator.of(context).pop();
-                                }
-                              },
-                            );
-                            return AlertDialog(
-                              title: const Text(
-                                'Erro',
-                                textAlign: TextAlign.center,
-                              ),
-                              content: Text(
-                                'Erro ao salvar: $e',
-                                textAlign: TextAlign.center,
-                              ),
-                            );
-                          },
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Erro ao salvar: $e'),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
                         );
                       }
                     },

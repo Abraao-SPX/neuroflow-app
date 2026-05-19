@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -92,13 +94,13 @@ class CustomDrawer extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              onTap: () {
-                // Aqui podemos adicionar uma função de logout real se houver
-                Navigator.pushNamedAndRemoveUntil(
+              onTap: () async {
+                final navigator = Navigator.of(context);
+                await Provider.of<AuthProvider>(
                   context,
-                  '/login',
-                  (route) => false,
-                );
+                  listen: false,
+                ).logout();
+                navigator.pushNamedAndRemoveUntil('/login', (route) => false);
               },
             ),
             const SizedBox(height: 20),
