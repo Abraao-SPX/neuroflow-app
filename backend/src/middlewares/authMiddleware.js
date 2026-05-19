@@ -21,7 +21,14 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, getJwtSecret());
+        const decoded = jwt.verify(token, getJwtSecret(), {
+            algorithms: ['HS256']
+        });
+
+        if (!decoded?.id) {
+            return res.status(403).json({ success: false, message: 'Token invalido.' });
+        }
+
         req.user = {
             id: decoded.id,
             username: decoded.username,

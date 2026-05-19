@@ -2,33 +2,20 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     try {
-      await queryInterface.describeTable('Tarefas');
+      await queryInterface.describeTable('checkins');
       return;
     } catch (error) {
       // Table does not exist yet.
     }
 
-    await queryInterface.createTable('Tarefas', {
+    await queryInterface.createTable('checkins', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
-      },
-      titulo: {
-        type: Sequelize.STRING(150),
-        allowNull: false
-      },
-      descricao: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
-      concluida: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
       },
       usuario_id: {
         type: Sequelize.INTEGER,
@@ -39,6 +26,15 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
+      },
+      humor: {
+        type: Sequelize.STRING(50),
+        allowNull: false
+      },
+      data_checkin: {
+        type: Sequelize.DATEONLY,
+        allowNull: false,
+        defaultValue: Sequelize.literal('(CURRENT_DATE)')
       },
       created_at: {
         allowNull: false,
@@ -51,9 +47,16 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
+
+    await queryInterface.addIndex('checkins', ['usuario_id'], {
+      name: 'checkins_usuario_id_idx'
+    });
+    await queryInterface.addIndex('checkins', ['usuario_id', 'data_checkin'], {
+      name: 'checkins_usuario_data_idx'
+    });
   },
 
-  async down (queryInterface, Sequelize) {
-    await queryInterface.dropTable('Tarefas');
+  async down(queryInterface) {
+    await queryInterface.dropTable('checkins');
   }
 };

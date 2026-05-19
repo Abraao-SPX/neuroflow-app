@@ -1,101 +1,91 @@
-const db = require('../config/db');
+const TaskSequelizeModel = require('./TaskSequelizeModel');
 
 class TaskModel {
-    static _mapRow(row) {
+    static _mapInstance(task) {
+        if (!task) return null;
+
         return {
-            id: row.id,
-            title: row.title,
-            description: row.description,
-            completed: Number(row.completed) === 1,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
+            id: task.id,
+            title: task.titulo,
+            description: task.descricao,
+            completed: Boolean(task.concluida),
+            createdAt: task.createdAt,
+            updatedAt: task.updatedAt
         };
     }
 
     static async getAllByUser(userId) {
-        const query = `
-            SELECT id, titulo AS title, descricao AS description, concluida AS completed, created_at, updated_at
-            FROM Tarefas
-            WHERE usuario_id = ?
-            ORDER BY created_at DESC, id DESC
-        `;
+        const tasks = await TaskSequelizeModel.findAll({
+            where: { usuarioId: userId },
+            order: [['createdAt', 'DESC'], ['id', 'DESC']]
+        });
 
-        const [rows] = await db.execute(query, [userId]);
-        return rows.map(TaskModel._mapRow);
+        return tasks.map(TaskModel._mapInstance);
     }
 
     static async findById(id, userId) {
-        const query = `
-            SELECT id, titulo AS title, descricao AS description, concluida AS completed, created_at, updated_at
-            FROM Tarefas
-            WHERE id = ? AND usuario_id = ?
-            LIMIT 1
-        `;
+        const task = await TaskSequelizeModel.findOne({
+            where: {
+                id,
+                usuarioId: userId
+            }
+        });
 
-        const [rows] = await db.execute(query, [id, userId]);
-        if (!rows[0]) return null;
-        return TaskModel._mapRow(rows[0]);
+        return TaskModel._mapInstance(task);
     }
 
     static async create(task) {
-        const query = `
-            INSERT INTO Tarefas (usuario_id, titulo, descricao, concluida)
-            VALUES (?, ?, ?, ?)
-        `;
+        const newTask = await TaskSequelizeModel.create({
+            usuarioId: task.userId,
+            titulo: task.title,
+            descricao: task.description ?? null,
+            concluida: false
+        });
 
-        const [result] = await db.execute(query, [
-            task.userId,
-            task.title,
-            task.description ?? null,
-            0
-        ]);
-
-        return TaskModel.findById(result.insertId, task.userId);
+        return TaskModel._mapInstance(newTask);
     }
 
     static async update(id, userId, taskData) {
-        const fields = [];
-        const values = [];
+        const task = await TaskSequelizeModel.findOne({
+            where: {
+                id,
+                usuarioId: userId
+            }
+        });
+
+        if (!task) return null;
+
+        const updateData = {};
 
         if (taskData.title !== undefined) {
-            fields.push('titulo = ?');
-            values.push(taskData.title);
+            updateData.titulo = taskData.title;
         }
 
         if (taskData.description !== undefined) {
-            fields.push('descricao = ?');
-            values.push(taskData.description);
+            updateData.descricao = taskData.description;
         }
 
         if (taskData.completed !== undefined) {
-            fields.push('concluida = ?');
-            values.push(taskData.completed ? 1 : 0);
+            updateData.concluida = taskData.completed;
         }
 
-        if (fields.length === 0) {
+        if (Object.keys(updateData).length === 0) {
             return null;
         }
 
-        const query = `
-            UPDATE Tarefas
-            SET ${fields.join(', ')}
-            WHERE id = ? AND usuario_id = ?
-        `;
-
-        values.push(id, userId);
-        const [result] = await db.execute(query, values);
-
-        if (result.affectedRows === 0) {
-            return null;
-        }
-
-        return TaskModel.findById(id, userId);
+        await task.update(updateData);
+        return TaskModel._mapInstance(task);
     }
 
     static async delete(id, userId) {
-        const query = 'DELETE FROM Tarefas WHERE id = ? AND usuario_id = ?';
-        const [result] = await db.execute(query, [id, userId]);
-        return result.affectedRows > 0;
+        const deletedCount = await TaskSequelizeModel.destroy({
+            where: {
+                id,
+                usuarioId: userId
+            }
+        });
+
+        return deletedCount > 0;
     }
 }
 

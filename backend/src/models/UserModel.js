@@ -1,8 +1,16 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { DataTypes, Model, Op } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const { getJwtSecret, getTokenExpiration } = require('../config/auth');
+
+function hashResetToken(token) {
+    return crypto
+        .createHmac('sha256', getJwtSecret())
+        .update(String(token))
+        .digest('hex');
+}
 
 class UserModel extends Model {
     toSafeJSON() {
@@ -23,7 +31,10 @@ class UserModel extends Model {
                 role: user.role
             },
             getJwtSecret(),
-            { expiresIn: getTokenExpiration() }
+            {
+                expiresIn: getTokenExpiration(),
+                algorithm: 'HS256'
+            }
         );
     }
 
@@ -53,7 +64,7 @@ class UserModel extends Model {
     static async findByResetToken(token) {
         return this.findOne({
             where: {
-                resetToken: token,
+                resetToken: hashResetToken(token),
                 resetTokenExpires: {
                     [Op.gt]: new Date()
                 }
@@ -64,7 +75,7 @@ class UserModel extends Model {
     static async updateResetToken(userId, token, expires) {
         await this.update(
             {
-                resetToken: token,
+                resetToken: hashResetToken(token),
                 resetTokenExpires: expires
             },
             { where: { id: userId } }

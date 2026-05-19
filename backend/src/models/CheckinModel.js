@@ -24,10 +24,6 @@ CheckinModel.init({
         type: DataTypes.STRING(50),
         allowNull: false
     },
-    gatilhos: {
-        type: DataTypes.JSON, // Armazena array de gatilhos como JSON
-        allowNull: true
-    },
     dataCheckin: {
         type: DataTypes.DATEONLY,
         field: 'data_checkin',
@@ -37,10 +33,23 @@ CheckinModel.init({
     sequelize,
     modelName: 'Checkin',
     tableName: 'checkins',
-    timestamps: true // createdAt, updatedAt
+    timestamps: true
 });
 
-UserModel.hasMany(CheckinModel, { foreignKey: 'usuario_id' });
-CheckinModel.belongsTo(UserModel, { foreignKey: 'usuario_id' });
+UserModel.hasMany(CheckinModel, {
+    foreignKey: {
+        name: 'usuarioId',
+        field: 'usuario_id'
+    },
+    as: 'checkins'
+});
+
+CheckinModel.belongsTo(UserModel, {
+    foreignKey: {
+        name: 'usuarioId',
+        field: 'usuario_id'
+    },
+    as: 'user'
+});
 
 module.exports = CheckinModel;

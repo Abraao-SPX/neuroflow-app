@@ -4,8 +4,8 @@ services:
     container_name: neuroflow-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: neuroflow_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      MYSQL_DATABASE: ${DB_NAME:-neuroflow_db}
     ports:
       - "3306:3306"
     volumes:
@@ -33,14 +33,15 @@ services:
     environment:
       - PORT=3000
       - DB_HOST=db
-      - DB_USER=root
-      - DB_PASSWORD=rootpassword
-      - DB_NAME=neuroflow_db
-      - JWT_SECRET=sua_chave_jwt_secreta_e_segura
-      - TOKEN_EXPIRATION=1h
-      - REFRESH_TOKEN_SECRET=sua_chave_refresh_secreta_e_segura
-      - REFRESH_TOKEN_EXPIRATION=30d
-      - RESET_TOKEN_EXPIRATION_MINUTES=5
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
+      - DB_NAME=${DB_NAME:-neuroflow_db}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - TOKEN_EXPIRATION=${TOKEN_EXPIRATION:-1h}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET:?REFRESH_TOKEN_SECRET is required}
+      - REFRESH_TOKEN_EXPIRATION=${REFRESH_TOKEN_EXPIRATION:-30d}
+      - RESET_TOKEN_EXPIRATION_MINUTES=${RESET_TOKEN_EXPIRATION_MINUTES:-5}
+      - CORS_ORIGINS=${CORS_ORIGINS:?CORS_ORIGINS is required}
     depends_on:
       db:
         condition: service_healthy

@@ -11,14 +11,4 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-// Teste rápido para ver se conecta quando o arquivo é chamado
-pool.getConnection()
-    .then(conn => {
-        console.log('✅ Conexão com o banco de dados MySQL estabelecida com sucesso!');
-        conn.release();
-    })
-    .catch(err => {
-        console.error('❌ Erro ao conectar com o banco de dados:', err.message);
-    });
-
 module.exports = pool;

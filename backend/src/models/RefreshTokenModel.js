@@ -39,7 +39,10 @@ class RefreshTokenModel extends Model {
                 jti
             },
             getRefreshTokenSecret(),
-            { expiresIn }
+            {
+                expiresIn,
+                algorithm: 'HS256'
+            }
         );
 
         await this.create({
@@ -52,7 +55,9 @@ class RefreshTokenModel extends Model {
     }
 
     static async findValidToken(token) {
-        const payload = jwt.verify(token, getRefreshTokenSecret());
+        const payload = jwt.verify(token, getRefreshTokenSecret(), {
+            algorithms: ['HS256']
+        });
         const storedToken = await this.findOne({
             where: {
                 tokenHash: hashToken(token),

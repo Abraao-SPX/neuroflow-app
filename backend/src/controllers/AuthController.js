@@ -3,14 +3,12 @@ const crypto = require('crypto');
 const UserModel = require('../models/UserModel');
 const RefreshTokenModel = require('../models/RefreshTokenModel');
 const { isMailConfigured, sendPasswordResetEmail } = require('../services/emailService');
-
-function shouldReturnResetTokenInResponse() {
-    if (process.env.RESET_TOKEN_RESPONSE_ENABLED !== undefined) {
-        return process.env.RESET_TOKEN_RESPONSE_ENABLED === 'true';
-    }
-
-    return process.env.NODE_ENV !== 'production';
-}
+const {
+    isUniqueConstraintError,
+    normalizeEmail,
+    normalizeRequiredString,
+    validatePassword
+} = require('../utils/validation');
 
 function getResetTokenExpirationMs() {
     const minutes = Number.parseInt(process.env.RESET_TOKEN_EXPIRATION_MINUTES || '5', 10);
@@ -24,19 +22,36 @@ function generateResetCode() {
 class AuthController {
     static async register(req, res) {
         try {
-            const password = req.body.password;
-            const username = String(req.body.username || req.body.name || '').trim();
-            const email = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
-
-            if (!username || !password) {
-                return res.status(400).json({ success: false, message: 'Username e password sao obrigatorios.' });
+            const usernameResult = normalizeRequiredString(req.body.username || req.body.name, 'Username', { min: 3, max: 100 });
+            if (usernameResult.error) {
+                return res.status(400).json({ success: false, message: usernameResult.error });
             }
 
-            if (email) {
-                const emailExists = await UserModel.findByEmail(email);
-                if (emailExists) {
-                    return res.status(409).json({ success: false, message: 'E-mail ja esta em uso.' });
-                }
+            const emailResult = normalizeEmail(req.body.email, { required: true });
+            if (emailResult.error) {
+                return res.status(400).json({ success: false, message: emailResult.error });
+            }
+
+            const passwordResult = validatePassword(req.body.password, 'Password');
+            if (passwordResult.error) {
+                return res.status(400).json({ success: false, message: passwordResult.error });
+            }
+
+            const username = usernameResult.value;
+            const email = emailResult.value;
+            const password = passwordResult.value;
+
+            const [usernameExists, emailExists] = await Promise.all([
+                UserModel.findByUsername(username),
+                UserModel.findByEmail(email)
+            ]);
+
+            if (usernameExists) {
+                return res.status(409).json({ success: false, message: 'Username ja esta em uso.' });
+            }
+
+            if (emailExists) {
+                return res.status(409).json({ success: false, message: 'E-mail ja esta em uso.' });
             }
 
             const newUser = await UserModel.create({
@@ -57,6 +72,10 @@ class AuthController {
                 user: newUser.toSafeJSON()
             });
         } catch (error) {
+            if (isUniqueConstraintError(error)) {
+                return res.status(409).json({ success: false, message: 'Usuario ou e-mail ja esta em uso.' });
+            }
+
             console.error('[AuthController] Erro no registro:', error);
             return res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
         }
@@ -102,23 +121,18 @@ class AuthController {
     static async forgotPassword(req, res) {
         try {
             const email = req.body.email ? String(req.body.email).trim().toLowerCase() : '';
-            if (!email) {
-                return res.status(400).json({ success: false, message: 'E-mail e obrigatorio.' });
+            const emailResult = normalizeEmail(email, { required: true });
+            if (emailResult.error) {
+                return res.status(400).json({ success: false, message: emailResult.error });
             }
 
-            const user = await UserModel.findByEmail(email);
+            const user = await UserModel.findByEmail(emailResult.value);
             if (!user) {
                 return res.status(200).json({ success: true, message: 'Se o e-mail estiver cadastrado, as instrucoes foram enviadas.' });
             }
 
-            const now = new Date();
-            let token = user.resetToken;
-            let expires = user.resetTokenExpires ? new Date(user.resetTokenExpires) : null;
-
-            if (!token || !/^\d{6}$/.test(token) || !expires || expires <= now) {
-                token = generateResetCode();
-            }
-            expires = new Date(Date.now() + getResetTokenExpirationMs());
+            const token = generateResetCode();
+            const expires = new Date(Date.now() + getResetTokenExpirationMs());
             await UserModel.updateResetToken(user.id, token, expires);
 
             const response = { success: true, message: 'Se o e-mail estiver cadastrado, as instrucoes foram enviadas.' };
@@ -128,10 +142,6 @@ class AuthController {
                     token,
                     expires
                 });
-            }
-
-            if (shouldReturnResetTokenInResponse()) {
-                response.token = token;
             }
 
             return res.status(200).json(response);
@@ -148,12 +158,17 @@ class AuthController {
                 return res.status(400).json({ success: false, message: 'Codigo e nova password sao obrigatorios.' });
             }
 
+            const passwordResult = validatePassword(newPassword, 'Nova password');
+            if (passwordResult.error) {
+                return res.status(400).json({ success: false, message: passwordResult.error });
+            }
+
             const user = await UserModel.findByResetToken(token);
             if (!user) {
                 return res.status(400).json({ success: false, message: 'Codigo invalido ou expirado.' });
             }
 
-            await UserModel.updatePassword(user.id, newPassword);
+            await UserModel.updatePassword(user.id, passwordResult.value);
 
             return res.status(200).json({ success: true, message: 'Password atualizada com sucesso.' });
         } catch (error) {

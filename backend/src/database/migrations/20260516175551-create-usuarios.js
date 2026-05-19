@@ -3,6 +3,13 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
+    try {
+      await queryInterface.describeTable('Usuarios');
+      return;
+    } catch (error) {
+      // Table does not exist yet.
+    }
+
     await queryInterface.createTable('Usuarios', {
       id: {
         allowNull: false,
@@ -45,7 +52,7 @@ module.exports = {
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') // Ou ON UPDATE CURRENT_TIMESTAMP, mas deixamos pelo Sequelize
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
   },
