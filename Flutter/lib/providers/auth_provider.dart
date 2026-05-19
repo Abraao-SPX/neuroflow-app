@@ -5,19 +5,28 @@ class AuthProvider extends ChangeNotifier {
   String? _token;
   Map<String, dynamic>? _user;
   bool _isLoading = false;
+  bool _isInitialized = false;
 
   // Getters
   String? get token => _token;
   Map<String, dynamic>? get user => _user;
   bool get isLoading => _isLoading;
+  bool get isInitialized => _isInitialized;
   bool get isLoggedIn => _token != null;
 
   // Inicializa tentando restaurar a sessao por refresh token.
   Future<void> initAuth() async {
-    final restored = await AuthService.restoreSession();
-    _token = restored?['token'];
-    _user = restored?['user'];
-    notifyListeners();
+    try {
+      final restored = await AuthService.restoreSession();
+      _token = restored?['token'];
+      _user = restored?['user'];
+    } catch (_) {
+      _token = null;
+      _user = null;
+    } finally {
+      _isInitialized = true;
+      notifyListeners();
+    }
   }
 
   // Login

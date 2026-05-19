@@ -32,11 +32,6 @@ class AuthController {
                 return res.status(400).json({ success: false, message: 'Username e password sao obrigatorios.' });
             }
 
-            const usernameExists = await UserModel.findByUsername(username);
-            if (usernameExists) {
-                return res.status(409).json({ success: false, message: 'Username ja esta em uso.' });
-            }
-
             if (email) {
                 const emailExists = await UserModel.findByEmail(email);
                 if (emailExists) {

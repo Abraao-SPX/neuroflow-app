@@ -48,7 +48,24 @@ class MyApp extends StatelessWidget {
         );
       },
 
-      home: const OnboardingScreen(),
+      home: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          if (!authProvider.isInitialized) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+              ),
+            );
+          }
+          if (authProvider.isLoggedIn) {
+            if (authProvider.user?['role'] == 'admin') {
+              return const AdminDashboardScreen();
+            }
+            return const HomeScreen();
+          }
+          return const OnboardingScreen();
+        },
+      ),
 
       routes: {
         '/login': (context) => const LoginScreen(),

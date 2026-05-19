@@ -8,6 +8,7 @@ class AuthService {
   static String get baseUrl => ApiConstants.authUrl;
   static const String _authTokenKey = 'auth_token';
   static const String _refreshTokenKey = 'refresh_token';
+  static const String _userKey = 'cached_user';
   static String? _sessionToken;
   static Map<String, dynamic>? _currentUser;
 
@@ -95,19 +96,34 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_authTokenKey, token);
     await prefs.setString(_refreshTokenKey, refreshToken);
+    if (_currentUser != null) {
+      await prefs.setString(_userKey, jsonEncode(_currentUser));
+    }
   }
 
   static Future<Map<String, dynamic>?> restoreSession() async {
-    final token = await getStoredToken();
+    final prefs = await SharedPreferences.getInstance();
+
+    final token = prefs.getString(_authTokenKey);
     if (token == null) {
       return null;
     }
 
-    if (_currentUser != null) {
-      return {'token': token, 'accessToken': token, 'user': _currentUser};
+    _sessionToken = token;
+
+    if (_currentUser == null) {
+      final userStr = prefs.getString(_userKey);
+      if (userStr != null) {
+        try {
+          _currentUser = jsonDecode(userStr);
+        } catch (_) {}
+      }
     }
 
-    return refreshAccessToken();
+    // Refresh no background sem travar o startup offline
+    refreshAccessToken().catchError((_) => null);
+
+    return {'token': token, 'accessToken': token, 'user': _currentUser};
   }
 
   static Future<String?> getStoredToken() async {
@@ -152,6 +168,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_authTokenKey);
     await prefs.remove(_refreshTokenKey);
+    await prefs.remove(_userKey);
   }
 
   static Future<void> logout() async {
