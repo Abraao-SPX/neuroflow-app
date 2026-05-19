@@ -117,7 +117,7 @@ Campos principais:
 Indices relevantes:
 
 - `Usuarios.email` unico
-- `Usuarios.username` unico
+- `Usuarios.username` nao e unico; e nome de exibicao
 - `Tarefas.usuario_id`
 - `checkins.usuario_id`
 - `checkins.usuario_id, data_checkin`

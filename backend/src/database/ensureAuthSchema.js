@@ -52,15 +52,12 @@ async function ensureAuthSchema(sequelize) {
 
     if (table.username) {
         const indexes = await queryInterface.showIndex('Usuarios');
-        const hasUsernameUnique = indexes.some((index) => {
+        const usernameUniqueIndexes = indexes.filter((index) => {
             return index.unique && index.fields.some((field) => field.attribute === 'username');
         });
 
-        if (!hasUsernameUnique) {
-            await queryInterface.addIndex('Usuarios', ['username'], {
-                unique: true,
-                name: 'usuarios_username_unique'
-            });
+        for (const index of usernameUniqueIndexes) {
+            await queryInterface.removeIndex('Usuarios', index.name);
         }
     }
 }

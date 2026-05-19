@@ -51,14 +51,7 @@ class UserModel extends Model {
     }
 
     static async findByLogin(identifier) {
-        return this.findOne({
-            where: {
-                [Op.or]: [
-                    { email: identifier },
-                    { username: identifier }
-                ]
-            }
-        });
+        return this.findByEmail(identifier);
     }
 
     static async findByResetToken(token) {
@@ -103,7 +96,10 @@ UserModel.init(
         },
         username: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: false,
+            validate: {
+                len: [3, 100]
+            }
         },
         email: {
             type: DataTypes.STRING,

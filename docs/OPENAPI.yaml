@@ -383,13 +383,11 @@ components:
           minLength: 8
     LoginRequest:
       type: object
-      required: [password]
+      required: [email, password]
       properties:
         email:
           type: string
           format: email
-        username:
-          type: string
         password:
           type: string
     CreateTaskRequest:

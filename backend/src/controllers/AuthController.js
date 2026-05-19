@@ -41,15 +41,7 @@ class AuthController {
             const email = emailResult.value;
             const password = passwordResult.value;
 
-            const [usernameExists, emailExists] = await Promise.all([
-                UserModel.findByUsername(username),
-                UserModel.findByEmail(email)
-            ]);
-
-            if (usernameExists) {
-                return res.status(409).json({ success: false, message: 'Username ja esta em uso.' });
-            }
-
+            const emailExists = await UserModel.findByEmail(email);
             if (emailExists) {
                 return res.status(409).json({ success: false, message: 'E-mail ja esta em uso.' });
             }
@@ -73,7 +65,7 @@ class AuthController {
             });
         } catch (error) {
             if (isUniqueConstraintError(error)) {
-                return res.status(409).json({ success: false, message: 'Usuario ou e-mail ja esta em uso.' });
+                return res.status(409).json({ success: false, message: 'E-mail ja esta em uso.' });
             }
 
             console.error('[AuthController] Erro no registro:', error);
@@ -84,13 +76,18 @@ class AuthController {
     static async login(req, res) {
         try {
             const { password } = req.body;
-            const identifier = String(req.body.username || req.body.email || '').trim();
+            const email = req.body.email ? String(req.body.email).trim().toLowerCase() : '';
 
-            if (!identifier || !password) {
-                return res.status(400).json({ success: false, message: 'Username/email e password sao obrigatorios.' });
+            if (!email || !password) {
+                return res.status(400).json({ success: false, message: 'E-mail e password sao obrigatorios.' });
             }
 
-            const user = await UserModel.findByLogin(identifier);
+            const emailResult = normalizeEmail(email, { required: true });
+            if (emailResult.error) {
+                return res.status(400).json({ success: false, message: emailResult.error });
+            }
+
+            const user = await UserModel.findByEmail(emailResult.value);
 
             if (!user) {
                 return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
