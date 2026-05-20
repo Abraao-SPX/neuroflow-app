@@ -44,7 +44,9 @@ async function startServer() {
         getRefreshTokenExpiration();
         getAllowedOrigins();
         await sequelize.authenticate();
-        await ensureAuthSchema(sequelize);
+        if (process.env.AUTO_FIX_AUTH_SCHEMA === 'true') {
+            await ensureAuthSchema(sequelize);
+        }
 
         app.listen(PORT, () => {
             console.log(`Servidor rodando na porta ${PORT}`);

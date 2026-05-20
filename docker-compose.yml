@@ -31,6 +31,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      - NODE_ENV=production
       - PORT=3000
       - DB_HOST=db
       - DB_USER=${DB_USER:-root}
@@ -42,6 +43,7 @@ services:
       - REFRESH_TOKEN_EXPIRATION=${REFRESH_TOKEN_EXPIRATION:-30d}
       - RESET_TOKEN_EXPIRATION_MINUTES=${RESET_TOKEN_EXPIRATION_MINUTES:-5}
       - CORS_ORIGINS=${CORS_ORIGINS:?CORS_ORIGINS is required}
+      - AUTO_FIX_AUTH_SCHEMA=${AUTO_FIX_AUTH_SCHEMA:-false}
     depends_on:
       db:
         condition: service_healthy

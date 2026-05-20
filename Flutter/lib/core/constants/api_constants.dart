@@ -1,11 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConstants {
-  // CONFIGURACAO DE AMBIENTE
-  // Altere para true quando for testar com a API na nuvem / servidor VPS.
-  static const bool isProduction = true;
+  // Use --dart-define=IS_PRODUCTION=true para apontar para a API na VPS.
+  static const bool isProduction = bool.fromEnvironment(
+    'IS_PRODUCTION',
+    defaultValue: false,
+  );
 
-  static const String productionBaseUrl = 'http://18.229.149.163:3000';
+  static const String productionBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://18.229.149.163:3000',
+  );
 
   static String get baseUrl {
     if (isProduction) {

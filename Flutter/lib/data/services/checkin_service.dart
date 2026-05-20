@@ -6,6 +6,19 @@ import 'auth_service.dart';
 class CheckinService {
   static String get baseUrl => ApiConstants.checkinsUrl;
 
+  static Map<String, dynamic> _safeDecode(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+    } catch (_) {
+      return {};
+    }
+
+    return {};
+  }
+
   static Future<void> salvarCheckin(String humor, List<String> gatilhos) async {
     final token = await AuthService.getStoredToken();
     if (token == null) throw Exception('Não autenticado');
@@ -22,7 +35,10 @@ class CheckinService {
     );
 
     if (response.statusCode != 201) {
-      throw Exception('Falha ao salvar check-in: ${response.statusCode}');
+      final data = _safeDecode(response.body);
+      throw Exception(
+        data['message'] ?? 'Falha ao salvar check-in: ${response.statusCode}',
+      );
     }
   }
 
@@ -37,10 +53,11 @@ class CheckinService {
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
+      final decoded = _safeDecode(response.body);
       return decoded['data'] ?? [];
     } else {
-      throw Exception('Falha ao listar check-ins');
+      final data = _safeDecode(response.body);
+      throw Exception(data['message'] ?? 'Falha ao listar check-ins');
     }
   }
 }

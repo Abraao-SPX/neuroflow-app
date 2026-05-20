@@ -9,6 +9,7 @@
     "test": "node --test",
     "check": "node scripts/check-syntax.js",
     "verify": "npm run check && npm test",
+    "admin:create": "node scripts/create-admin.js",
     "migrate": "sequelize-cli db:migrate",
     "seed": "sequelize-cli db:seed:all"
   },

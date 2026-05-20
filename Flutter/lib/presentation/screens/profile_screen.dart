@@ -19,11 +19,25 @@ class ProfileScreen extends StatelessWidget {
     final String userEmail = user?['email'] ?? 'Carregando...';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF9F0), // Bege de fundo
+      backgroundColor: const Color(0xFFFDF9F0), // Bege de fallback
       endDrawer:
           const CustomDrawer(), // Menu lateral que será aberto pelos 3 tracinhos na direita
       body: Stack(
         children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/perfil.jpeg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const ColoredBox(color: Color(0xFFFDF9F0));
+              },
+            ),
+          ),
+          Positioned.fill(
+            child: ColoredBox(
+              color: Colors.white.withValues(alpha: 0.18),
+            ),
+          ),
           // Decoração de fundo (estilo aquarela/folhas)
           Positioned(
             top: 0,

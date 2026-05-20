@@ -15,6 +15,10 @@ function createRateLimiter({ windowMs, max, message }) {
     }
 
     return (req, res, next) => {
+        if (process.env.RATE_LIMIT_DISABLED === 'true') {
+            return next();
+        }
+
         const now = Date.now();
         const key = `${req.method}:${req.originalUrl.split('?')[0]}:${getClientIp(req)}`;
         const current = buckets.get(key);
