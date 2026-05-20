@@ -9,6 +9,7 @@ import 'presentation/screens/register_screen.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/weekly_summary_screen.dart';
 import 'presentation/screens/profile_screen.dart';
+import 'presentation/screens/alphabet_board_screen.dart';
 import 'presentation/screens/admin/admin_dashboard_screen.dart';
 
 void main() {
@@ -76,6 +77,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/weekly': (context) => const WeeklySummaryScreen(),
+        '/alphabet-board': (context) => const AlphabetBoardScreen(),
         '/admin_dashboard': (context) => const AdminDashboardScreen(),
       },
     );

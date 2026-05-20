@@ -83,6 +83,22 @@ class CustomDrawer extends StatelessWidget {
                 Navigator.pushReplacementNamed(context, '/support');
               },
             ),
+            ListTile(
+              leading: const Icon(
+                Icons.accessibility_new,
+                color: Color(0xFF4A6572),
+              ),
+              title: const Text(
+                'Acessibilidade',
+                style: TextStyle(
+                  color: Color(0xFF4A6572),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/alphabet-board');
+              },
+            ),
             const Spacer(),
             const Divider(),
             ListTile(

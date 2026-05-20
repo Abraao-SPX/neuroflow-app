@@ -67,10 +67,10 @@ class AccessibleKeyboard extends StatelessWidget {
         return GridView.builder(
           itemCount: characters.length,
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 90,
-            childAspectRatio: 1.1,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
+            maxCrossAxisExtent: 110,
+            childAspectRatio: 1.2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
           ),
           itemBuilder: (context, index) {
             final char = characters[index];

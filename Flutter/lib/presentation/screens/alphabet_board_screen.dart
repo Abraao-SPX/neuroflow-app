@@ -54,6 +54,40 @@ class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
     });
   }
 
+  void _onWordPressed(String word) {
+    setState(() {
+      if (_currentText.isNotEmpty && !_currentText.endsWith(' ')) {
+        _currentText += ' ' + word + ' ';
+      } else {
+        _currentText += word + ' ';
+      }
+    });
+  }
+
+  Widget _buildQuickWordButton(String word, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12.0),
+      child: ElevatedButton.icon(
+        onPressed: () => _onWordPressed(word),
+        icon: Icon(icon, size: 24),
+        label: Text(
+          word,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color.withValues(alpha: 0.1),
+          foregroundColor: color,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+          side: BorderSide(color: color.withValues(alpha: 0.3), width: 2),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Cores suaves para reduzir sobrecarga sensorial
@@ -171,7 +205,57 @@ class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              // Frases rápidas
+              SizedBox(
+                height: 60,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildQuickWordButton(
+                      "Sim",
+                      Icons.thumb_up_alt_rounded,
+                      Colors.green,
+                    ),
+                    _buildQuickWordButton(
+                      "Não",
+                      Icons.thumb_down_alt_rounded,
+                      Colors.red,
+                    ),
+                    _buildQuickWordButton(
+                      "Água",
+                      Icons.local_drink_rounded,
+                      Colors.blue,
+                    ),
+                    _buildQuickWordButton(
+                      "Comida",
+                      Icons.restaurant_rounded,
+                      Colors.orange,
+                    ),
+                    _buildQuickWordButton(
+                      "Banheiro",
+                      Icons.wc_rounded,
+                      Colors.grey.shade700,
+                    ),
+                    _buildQuickWordButton(
+                      "Dor",
+                      Icons.healing_rounded,
+                      Colors.deepPurple,
+                    ),
+                    _buildQuickWordButton(
+                      "Por favor",
+                      Icons.favorite_rounded,
+                      Colors.pink,
+                    ),
+                    _buildQuickWordButton(
+                      "Obrigado",
+                      Icons.handshake_rounded,
+                      Colors.teal,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               // Área do Teclado
               Expanded(
                 child: AccessibleKeyboard(
