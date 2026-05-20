@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConstants {
-  // Use --dart-define=IS_PRODUCTION=false para testar com a API local.
+  // Use --dart-define=IS_PRODUCTION=true para compilar para produção.
   static const bool isProduction = bool.fromEnvironment(
     'IS_PRODUCTION',
-    defaultValue: true,
+    defaultValue:
+        false, // Alterado para false por padrão para facilitar os testes
   );
 
   static const String productionBaseUrl = String.fromEnvironment(
