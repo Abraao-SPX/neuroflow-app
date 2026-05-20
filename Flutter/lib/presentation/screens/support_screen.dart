@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../widgets/custom_drawer.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
+
+  static const MethodChannel _phoneChannel = MethodChannel('neuroflow/phone');
+
+  Future<void> _openDialer(BuildContext context) async {
+    try {
+      await _phoneChannel.invokeMethod('openDialer', {'number': '188'});
+    } catch (_) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível abrir o aplicativo de ligação.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,9 +165,7 @@ class SupportScreen extends StatelessWidget {
 
                   // BOTÃO LIGAR AGORA
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // Lógica para abrir o discador do celular
-                    },
+                    onPressed: () => _openDialer(context),
                     icon: const Icon(Icons.phone_in_talk, color: Colors.white),
                     label: const Text(
                       'Ligar agora (188)',

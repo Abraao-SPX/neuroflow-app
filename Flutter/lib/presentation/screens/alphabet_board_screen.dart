@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/accessible_keyboard.dart';
+import '../widgets/custom_drawer.dart';
 
 class AlphabetBoardScreen extends StatefulWidget {
   const AlphabetBoardScreen({super.key});
@@ -106,10 +107,7 @@ class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
     );
   }
 
-  Widget _buildComposer({
-    required bool isCompact,
-    required bool isLandscape,
-  }) {
+  Widget _buildComposer({required bool isCompact, required bool isLandscape}) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isCompact ? 10 : 14),
@@ -168,7 +166,7 @@ class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
         padding: EdgeInsets.zero,
         scrollDirection: Axis.horizontal,
         itemCount: _quickWords.length,
-        separatorBuilder: (_, __) => SizedBox(width: isCompact ? 6 : 8),
+        separatorBuilder: (_, _) => SizedBox(width: isCompact ? 6 : 8),
         itemBuilder: (context, index) {
           return _buildQuickWordButton(
             item: _quickWords[index],
@@ -183,6 +181,7 @@ class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
+      endDrawer: const CustomDrawer(),
       appBar: AppBar(
         title: const Text('Prancha de Comunicação'),
         centerTitle: true,
@@ -194,6 +193,27 @@ class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
+        leading: IconButton(
+          tooltip: 'Voltar para a página principal',
+          icon: const Icon(Icons.home_outlined),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/home');
+          },
+        ),
+        actions: [
+          Builder(
+            builder: (context) {
+              return IconButton(
+                tooltip: 'Abrir menu',
+                icon: const Icon(Icons.menu, size: 30),
+                onPressed: () {
+                  Scaffold.of(context).openEndDrawer();
+                },
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         left: false,
