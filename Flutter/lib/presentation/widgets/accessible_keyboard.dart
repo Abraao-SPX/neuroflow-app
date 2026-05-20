@@ -81,6 +81,69 @@ class AccessibleKeyboard extends StatelessWidget {
         final maxCrossAxisExtent = compactByHeight ? null : 98.0;
         final childAspectRatio = compactByHeight ? 1.95 : 1.18;
         final spacing = compactByHeight ? 6.0 : 8.0;
+        final shouldStretch = isCompact &&
+            constraints.maxHeight > 520 &&
+            width >= 320 &&
+            width < 760;
+
+        if (shouldStretch) {
+          const columns = 6;
+          final rows = <List<String>>[
+            characters.sublist(0, 6),
+            characters.sublist(6, 12),
+            characters.sublist(12, 18),
+            characters.sublist(18, 24),
+            characters.sublist(24, 30),
+            characters.sublist(30, 36),
+            ['ESPAÇO'],
+          ];
+          final rowSpacing = spacing;
+          final availableHeight =
+              constraints.maxHeight - rowSpacing * (rows.length - 1);
+          final spaceRowHeight = (availableHeight * 0.62 / rows.length)
+              .clamp(48.0, 76.0)
+              .toDouble();
+          final keyHeight =
+              (availableHeight - spaceRowHeight) / (rows.length - 1);
+
+          return Column(
+            children: [
+              for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) ...[
+                SizedBox(
+                  height: rowIndex == rows.length - 1
+                      ? spaceRowHeight
+                      : keyHeight,
+                  child: Row(
+                    children: [
+                      for (var index = 0; index < rows[rowIndex].length; index++)
+                        Expanded(
+                          flex: rows[rowIndex][index] == 'ESPAÇO' ? columns : 1,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              right: index == rows[rowIndex].length - 1
+                                  ? 0
+                                  : spacing,
+                            ),
+                            child: _KeyboardKey(
+                              char: rows[rowIndex][index],
+                              isCompact: false,
+                              onPressed: onCharacterPressed,
+                              color: _getKeyColor(
+                                rows[rowIndex][index],
+                                rows[rowIndex][index] == 'ESPAÇO',
+                              ),
+                              isNumber: _isNumber(rows[rowIndex][index]),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (rowIndex != rows.length - 1) SizedBox(height: rowSpacing),
+              ],
+            ],
+          );
+        }
 
         return GridView.builder(
           padding: EdgeInsets.zero,
@@ -105,40 +168,68 @@ class AccessibleKeyboard extends StatelessWidget {
             final char = characters[index];
             final isSpace = char == 'ESPAÇO';
 
-            return Material(
+            return _KeyboardKey(
+              char: char,
+              isCompact: compactByHeight,
+              onPressed: onCharacterPressed,
               color: _getKeyColor(char, isSpace),
-              borderRadius: BorderRadius.circular(compactByHeight ? 12 : 16),
-              elevation: compactByHeight ? 1.5 : 2,
-              shadowColor: Colors.black26,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(compactByHeight ? 12 : 16),
-                onTap: () => onCharacterPressed(isSpace ? ' ' : char),
-                // Semântica melhorada com agrupamentos lógicos
-                child: Semantics(
-                  label: isSpace
-                      ? 'Tecla de Espaço'
-                      : _isNumber(char)
-                      ? 'Número $char'
-                      : 'Letra $char',
-                  button: true,
-                  child: Center(
-                    child: Text(
-                      isSpace ? 'Espaço' : char,
-                      style: TextStyle(
-                        fontSize: compactByHeight
-                            ? (isSpace ? 13 : 22)
-                            : (isSpace ? 20 : 32),
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              isNumber: _isNumber(char),
             );
           },
         );
       },
+    );
+  }
+}
+
+class _KeyboardKey extends StatelessWidget {
+  final String char;
+  final bool isCompact;
+  final Function(String) onPressed;
+  final Color color;
+  final bool isNumber;
+
+  const _KeyboardKey({
+    required this.char,
+    required this.isCompact,
+    required this.onPressed,
+    required this.color,
+    required this.isNumber,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSpace = char == 'ESPAÇO';
+
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+      elevation: isCompact ? 1.5 : 2,
+      shadowColor: Colors.black26,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+        onTap: () => onPressed(isSpace ? ' ' : char),
+        child: Semantics(
+          label: isSpace
+              ? 'Tecla de Espaço'
+              : isNumber
+              ? 'Número $char'
+              : 'Letra $char',
+          button: true,
+          child: Center(
+            child: Text(
+              isSpace ? 'Espaço' : char,
+              style: TextStyle(
+                fontSize: isCompact
+                    ? (isSpace ? 13 : 22)
+                    : (isSpace ? 20 : 32),
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
