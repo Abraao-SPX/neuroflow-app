@@ -34,9 +34,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           Positioned.fill(
-            child: ColoredBox(
-              color: Colors.white.withValues(alpha: 0.18),
-            ),
+            child: ColoredBox(color: Colors.white.withValues(alpha: 0.18)),
           ),
           // Decoração de fundo (estilo aquarela/folhas)
           Positioned(
@@ -109,10 +107,19 @@ class ProfileScreen extends StatelessWidget {
                           child: Column(
                             children: [
                               // Nuvenzinha (Ícone centralizado)
-                              const Icon(
-                                Icons.cloud_queue,
-                                size: 100,
-                                color: Color(0xFFB39DDB), // Roxo suave da nuvem
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFEAEBFF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.psychology,
+                                    size: 60,
+                                    color: Color(0xFF4F46E5),
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 15),
                               const Text(
