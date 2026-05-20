@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class AccessibleKeyboard extends StatelessWidget {
   final Function(String) onCharacterPressed;
+  final bool isCompact;
 
-  const AccessibleKeyboard({super.key, required this.onCharacterPressed});
+  const AccessibleKeyboard({
+    super.key,
+    required this.onCharacterPressed,
+    this.isCompact = false,
+  });
 
   bool _isVowel(String char) {
     return ['A', 'E', 'I', 'O', 'U'].contains(char);
@@ -64,25 +69,49 @@ class AccessibleKeyboard extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final compactByHeight = isCompact || constraints.maxHeight < 280;
+        final width = constraints.maxWidth;
+        final crossAxisCount = compactByHeight
+            ? width < 520
+                ? 6
+                : width < 760
+                    ? 8
+                    : 10
+            : null;
+        final maxCrossAxisExtent = compactByHeight ? null : 98.0;
+        final childAspectRatio = compactByHeight ? 1.95 : 1.18;
+        final spacing = compactByHeight ? 6.0 : 8.0;
+
         return GridView.builder(
+          padding: EdgeInsets.zero,
           itemCount: characters.length,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 110,
-            childAspectRatio: 1.2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
+          physics: compactByHeight
+              ? const NeverScrollableScrollPhysics()
+              : const BouncingScrollPhysics(),
+          gridDelegate: crossAxisCount != null
+              ? SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: childAspectRatio,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                )
+              : SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: maxCrossAxisExtent!,
+                  childAspectRatio: childAspectRatio,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                ),
           itemBuilder: (context, index) {
             final char = characters[index];
             final isSpace = char == 'ESPAÇO';
 
             return Material(
               color: _getKeyColor(char, isSpace),
-              borderRadius: BorderRadius.circular(16),
-              elevation: 3,
+              borderRadius: BorderRadius.circular(compactByHeight ? 12 : 16),
+              elevation: compactByHeight ? 1.5 : 2,
               shadowColor: Colors.black26,
               child: InkWell(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(compactByHeight ? 12 : 16),
                 onTap: () => onCharacterPressed(isSpace ? ' ' : char),
                 // Semântica melhorada com agrupamentos lógicos
                 child: Semantics(
@@ -96,7 +125,9 @@ class AccessibleKeyboard extends StatelessWidget {
                     child: Text(
                       isSpace ? 'Espaço' : char,
                       style: TextStyle(
-                        fontSize: isSpace ? 20 : 32,
+                        fontSize: compactByHeight
+                            ? (isSpace ? 13 : 22)
+                            : (isSpace ? 20 : 32),
                         fontWeight: FontWeight.w800,
                         color: Colors.black87,
                       ),

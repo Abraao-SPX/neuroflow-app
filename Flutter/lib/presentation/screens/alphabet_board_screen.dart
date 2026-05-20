@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../widgets/accessible_keyboard.dart';
 
 class AlphabetBoardScreen extends StatefulWidget {
@@ -10,29 +9,11 @@ class AlphabetBoardScreen extends StatefulWidget {
 }
 
 class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
-  String _currentText = "";
+  String _currentText = '';
 
-  @override
-  void initState() {
-    super.initState();
-    // Força a orientação horizontal (paisagem) conforme o requisito
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-    ]);
-  }
-
-  @override
-  void dispose() {
-    // Restaura as orientações permitidas ao sair da tela
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    super.dispose();
-  }
+  final Color primaryColor = const Color(0xFF4F46E5);
+  final Color backgroundColor = const Color.fromARGB(255, 184, 212, 218);
+  final Color textColor = const Color(0xFF1F2937);
 
   void _onCharacterPressed(String char) {
     setState(() {
@@ -41,231 +22,275 @@ class _AlphabetBoardScreenState extends State<AlphabetBoardScreen> {
   }
 
   void _onBackspace() {
-    if (_currentText.isNotEmpty) {
-      setState(() {
-        _currentText = _currentText.substring(0, _currentText.length - 1);
-      });
-    }
+    if (_currentText.isEmpty) return;
+
+    setState(() {
+      _currentText = _currentText.substring(0, _currentText.length - 1);
+    });
   }
 
   void _onClear() {
     setState(() {
-      _currentText = "";
+      _currentText = '';
     });
   }
 
   void _onWordPressed(String word) {
     setState(() {
       if (_currentText.isNotEmpty && !_currentText.endsWith(' ')) {
-        _currentText += ' ' + word + ' ';
+        _currentText += ' $word ';
       } else {
-        _currentText += word + ' ';
+        _currentText += '$word ';
       }
     });
   }
 
-  Widget _buildQuickWordButton(String word, IconData icon, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12.0),
-      child: ElevatedButton.icon(
-        onPressed: () => _onWordPressed(word),
-        icon: Icon(icon, size: 24),
-        label: Text(
-          word,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color.withValues(alpha: 0.1),
+  Widget _buildActionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+    required Color color,
+    required bool isCompact,
+  }) {
+    return SizedBox.square(
+      dimension: isCompact ? 46 : 52,
+      child: IconButton.filled(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, size: isCompact ? 22 : 24),
+        style: IconButton.styleFrom(
+          backgroundColor: color.withValues(alpha: 0.12),
           foregroundColor: color,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          disabledBackgroundColor: const Color(0xFFE5E7EB),
+          disabledForegroundColor: const Color(0xFF9CA3AF),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isCompact ? 14 : 16),
           ),
-          elevation: 0,
-          side: BorderSide(color: color.withValues(alpha: 0.3), width: 2),
         ),
+      ),
+    );
+  }
+
+  Widget _buildQuickWordButton({
+    required _QuickWord item,
+    required bool isCompact,
+  }) {
+    return FilledButton.tonalIcon(
+      onPressed: () => _onWordPressed(item.word),
+      icon: Icon(item.icon, size: isCompact ? 18 : 22),
+      label: Text(
+        item.word,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: isCompact ? 14 : 16,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      style: FilledButton.styleFrom(
+        backgroundColor: item.color.withValues(alpha: 0.13),
+        foregroundColor: item.color,
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 10 : 14,
+          vertical: isCompact ? 8 : 10,
+        ),
+        minimumSize: Size(0, isCompact ? 42 : 48),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(isCompact ? 14 : 16),
+          side: BorderSide(
+            color: item.color.withValues(alpha: 0.28),
+            width: 1.4,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComposer({
+    required bool isCompact,
+    required bool isLandscape,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isCompact ? 10 : 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(isCompact ? 18 : 22),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              reverse: true,
+              child: Text(
+                _currentText.isEmpty ? 'Digite algo...' : _currentText,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: isCompact
+                      ? (isLandscape ? 26 : 24)
+                      : (isLandscape ? 34 : 30),
+                  height: 1.1,
+                  fontWeight: FontWeight.w800,
+                  color: _currentText.isEmpty
+                      ? textColor.withValues(alpha: 0.35)
+                      : textColor,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: isCompact ? 8 : 12),
+          _buildActionButton(
+            icon: Icons.backspace_rounded,
+            tooltip: 'Apagar',
+            onPressed: _currentText.isEmpty ? null : _onBackspace,
+            color: const Color(0xFF4B5563),
+            isCompact: isCompact,
+          ),
+          SizedBox(width: isCompact ? 6 : 8),
+          _buildActionButton(
+            icon: Icons.delete_forever_rounded,
+            tooltip: 'Limpar',
+            onPressed: _currentText.isEmpty ? null : _onClear,
+            color: const Color(0xFFDC2626),
+            isCompact: isCompact,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickWords({required bool isCompact}) {
+    return SizedBox(
+      height: isCompact ? 42 : 48,
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
+        scrollDirection: Axis.horizontal,
+        itemCount: _quickWords.length,
+        separatorBuilder: (_, __) => SizedBox(width: isCompact ? 6 : 8),
+        itemBuilder: (context, index) {
+          return _buildQuickWordButton(
+            item: _quickWords[index],
+            isCompact: isCompact,
+          );
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Cores suaves para reduzir sobrecarga sensorial
-    const backgroundColor = Color(0xFFF0F4F8);
-
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('Prancha de Comunicação'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
+        centerTitle: true,
+        titleTextStyle: const TextStyle(
+          color: Color(0xFF1F2937),
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Área do Visor
-              Container(
+        left: false,
+        right: false,
+        top: false,
+        bottom: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isLandscape = constraints.maxWidth > constraints.maxHeight;
+            final isCompact =
+                constraints.maxHeight < 560 || constraints.maxWidth < 1000;
+            final outerPadding = isCompact ? 6.0 : 12.0;
+            final cardPadding = isCompact ? 12.0 : 20.0;
+            final gap = isCompact ? 8.0 : 14.0;
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                outerPadding,
+                isCompact ? 4 : 10,
+                outerPadding,
+                isCompact ? 6 : 16,
+              ),
+              child: Container(
                 width: double.infinity,
-                constraints: const BoxConstraints(minHeight: 100),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                height: double.infinity,
+                padding: EdgeInsets.all(cardPadding),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(isCompact ? 24 : 28),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.65),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.2),
-                      spreadRadius: 2,
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      color: const Color(0xFF24404A).withValues(alpha: 0.12),
+                      blurRadius: 28,
+                      offset: const Offset(0, 16),
                     ),
                   ],
-                  border: Border.all(
-                    color: Colors.blueAccent.withValues(alpha: 0.3),
-                    width: 3,
-                  ),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(
                   children: [
+                    if (!isCompact) ...[
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.record_voice_over_outlined,
+                          color: primaryColor,
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    _buildComposer(
+                      isCompact: isCompact,
+                      isLandscape: isLandscape,
+                    ),
+                    SizedBox(height: gap),
+                    _buildQuickWords(isCompact: isCompact),
+                    SizedBox(height: gap),
                     Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        reverse: true,
-                        child: Text(
-                          _currentText.isEmpty
-                              ? "Digite algo..."
-                              : _currentText,
-                          style: TextStyle(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w700,
-                            color: _currentText.isEmpty
-                                ? Colors.grey.shade400
-                                : Colors.black87,
-                            letterSpacing: 2.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Parede divisória visual
-                    Container(
-                      height: 50,
-                      width: 2,
-                      color: Colors.grey.shade200,
-                    ),
-                    const SizedBox(width: 12),
-                    // Botões com texto e ícone para clareza cognitiva
-                    ElevatedButton.icon(
-                      onPressed: _currentText.isEmpty ? null : _onBackspace,
-                      icon: const Icon(Icons.backspace_rounded, size: 28),
-                      label: const Text(
-                        "Apagar",
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange.shade50,
-                        foregroundColor: Colors.orange.shade900,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: _currentText.isEmpty ? null : _onClear,
-                      icon: const Icon(Icons.delete_forever_rounded, size: 28),
-                      label: const Text(
-                        "Limpar",
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade50,
-                        foregroundColor: Colors.red.shade900,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
+                      child: AccessibleKeyboard(
+                        onCharacterPressed: _onCharacterPressed,
+                        isCompact: isCompact,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // Frases rápidas
-              SizedBox(
-                height: 60,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _buildQuickWordButton(
-                      "Sim",
-                      Icons.thumb_up_alt_rounded,
-                      Colors.green,
-                    ),
-                    _buildQuickWordButton(
-                      "Não",
-                      Icons.thumb_down_alt_rounded,
-                      Colors.red,
-                    ),
-                    _buildQuickWordButton(
-                      "Água",
-                      Icons.local_drink_rounded,
-                      Colors.blue,
-                    ),
-                    _buildQuickWordButton(
-                      "Comida",
-                      Icons.restaurant_rounded,
-                      Colors.orange,
-                    ),
-                    _buildQuickWordButton(
-                      "Banheiro",
-                      Icons.wc_rounded,
-                      Colors.grey.shade700,
-                    ),
-                    _buildQuickWordButton(
-                      "Dor",
-                      Icons.healing_rounded,
-                      Colors.deepPurple,
-                    ),
-                    _buildQuickWordButton(
-                      "Por favor",
-                      Icons.favorite_rounded,
-                      Colors.pink,
-                    ),
-                    _buildQuickWordButton(
-                      "Obrigado",
-                      Icons.handshake_rounded,
-                      Colors.teal,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Área do Teclado
-              Expanded(
-                child: AccessibleKeyboard(
-                  onCharacterPressed: _onCharacterPressed,
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
+
+class _QuickWord {
+  final String word;
+  final IconData icon;
+  final Color color;
+
+  const _QuickWord(this.word, this.icon, this.color);
+}
+
+const List<_QuickWord> _quickWords = [
+  _QuickWord('Sim', Icons.thumb_up_alt_rounded, Colors.green),
+  _QuickWord('Não', Icons.thumb_down_alt_rounded, Colors.red),
+  _QuickWord('Água', Icons.local_drink_rounded, Colors.blue),
+  _QuickWord('Comida', Icons.restaurant_rounded, Colors.orange),
+  _QuickWord('Banheiro', Icons.wc_rounded, Colors.blueGrey),
+  _QuickWord('Dor', Icons.healing_rounded, Colors.deepPurple),
+  _QuickWord('Por favor', Icons.favorite_rounded, Colors.pink),
+  _QuickWord('Obrigado', Icons.handshake_rounded, Colors.teal),
+];
