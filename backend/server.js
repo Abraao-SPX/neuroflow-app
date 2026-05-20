@@ -50,7 +50,21 @@ async function startServer() {
             console.log(`Servidor rodando na porta ${PORT}`);
         });
     } catch (error) {
-        console.error('Erro ao inicializar o servidor:', error.message);
+        const message = error?.message ||
+            error?.original?.message ||
+            error?.parent?.message ||
+            error?.name ||
+            error?.constructor?.name;
+
+        console.error('Erro ao inicializar o servidor:', message || error);
+
+        const nestedErrors = error?.parent?.errors || error?.original?.errors;
+        if (Array.isArray(nestedErrors)) {
+            nestedErrors.forEach((nestedError) => {
+                console.error(`- ${nestedError.code || nestedError.name}: ${nestedError.message}`);
+            });
+        }
+
         process.exit(1);
     }
 }
