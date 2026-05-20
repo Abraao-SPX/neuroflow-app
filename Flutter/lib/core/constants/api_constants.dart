@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConstants {
-  // Use --dart-define=IS_PRODUCTION=true para apontar para a API na VPS.
+  // Use --dart-define=IS_PRODUCTION=false para testar com a API local.
   static const bool isProduction = bool.fromEnvironment(
     'IS_PRODUCTION',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   static const String productionBaseUrl = String.fromEnvironment(
