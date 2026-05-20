@@ -13,6 +13,7 @@ class WeeklySummaryScreen extends StatefulWidget {
 
 class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
   List<dynamic> _checkins = [];
+  final Set<int> _deletingCheckinIds = {};
   bool _isLoading = true;
 
   static const List<Color> _chartColors = [
@@ -46,6 +47,89 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erro ao carregar resumo: $e')));
+    }
+  }
+
+  int? _readCheckinId(dynamic item) {
+    if (item is! Map) return null;
+
+    final id = item['id'];
+    if (id is int) return id;
+    if (id is String) return int.tryParse(id);
+
+    return null;
+  }
+
+  Future<void> _deleteCheckin(dynamic item) async {
+    final checkinId = _readCheckinId(item);
+    if (checkinId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível identificar o registro.'),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Apagar registro?'),
+          content: const Text('Esse check-in será removido do resumo.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Apagar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _deletingCheckinIds.add(checkinId);
+    });
+
+    try {
+      await CheckinService.apagarCheckin(checkinId);
+
+      if (!mounted) return;
+      setState(() {
+        _checkins.removeWhere(
+          (checkin) => _readCheckinId(checkin) == checkinId,
+        );
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registro apagado com sucesso.'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao apagar registro: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingCheckinIds.remove(checkinId);
+        });
+      }
     }
   }
 
@@ -186,13 +270,19 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                       );
                       final humor = item['humor'];
                       final gatilhos = _uniqueStrings(item['gatilhos']);
+                      final checkinId = _readCheckinId(item);
+                      final isDeleting =
+                          checkinId != null &&
+                          _deletingCheckinIds.contains(checkinId);
 
                       return Card(
                         elevation: 0,
                         margin: const EdgeInsets.only(bottom: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
-                          side: BorderSide(color: textColor.withValues(alpha: 0.2)),
+                          side: BorderSide(
+                            color: textColor.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
@@ -207,13 +297,36 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                                     color: textColor,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    formattedDate,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: textColor,
+                                  Expanded(
+                                    child: Text(
+                                      formattedDate,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: textColor,
+                                      ),
                                     ),
+                                  ),
+                                  SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    child: isDeleting
+                                        ? const Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : IconButton(
+                                            tooltip: 'Apagar registro',
+                                            padding: EdgeInsets.zero,
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.redAccent,
+                                            ),
+                                            onPressed: () =>
+                                                _deleteCheckin(item),
+                                          ),
                                   ),
                                 ],
                               ),
@@ -268,10 +381,7 @@ class _TriggerSlice {
 }
 
 class _WeeklyTriggersChart extends StatelessWidget {
-  const _WeeklyTriggersChart({
-    required this.slices,
-    required this.textColor,
-  });
+  const _WeeklyTriggersChart({required this.slices, required this.textColor});
 
   final List<_TriggerSlice> slices;
   final Color textColor;
@@ -332,9 +442,7 @@ class _WeeklyTriggersChart extends StatelessWidget {
                 child: SizedBox(
                   width: 240,
                   height: 220,
-                  child: CustomPaint(
-                    painter: _PieChartPainter(slices),
-                  ),
+                  child: CustomPaint(painter: _PieChartPainter(slices)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -392,11 +500,7 @@ class _ChartLegendItem extends StatelessWidget {
           Expanded(
             child: Text(
               '${slice.label} · ${slice.value}x · $percent%',
-              style: TextStyle(
-                color: textColor,
-                fontSize: 12,
-                height: 1.25,
-              ),
+              style: TextStyle(color: textColor, fontSize: 12, height: 1.25),
             ),
           ),
         ],
@@ -465,7 +569,11 @@ class _PieChartPainter extends CustomPainter {
         ],
         stops: const [0.15, 1],
       ).createShader(rect);
-    canvas.drawCircle(center.translate(-radius * 0.18, -radius * 0.22), radius, glossPaint);
+    canvas.drawCircle(
+      center.translate(-radius * 0.18, -radius * 0.22),
+      radius,
+      glossPaint,
+    );
   }
 
   void _drawValue(Canvas canvas, Offset center, String value) {
@@ -483,7 +591,8 @@ class _PieChartPainter extends CustomPainter {
 
     shadowPainter.paint(
       canvas,
-      center - Offset(shadowPainter.width / 2 - 1, shadowPainter.height / 2 - 2),
+      center -
+          Offset(shadowPainter.width / 2 - 1, shadowPainter.height / 2 - 2),
     );
 
     final textPainter = TextPainter(

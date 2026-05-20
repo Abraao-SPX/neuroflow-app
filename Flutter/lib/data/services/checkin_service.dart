@@ -60,4 +60,20 @@ class CheckinService {
       throw Exception(data['message'] ?? 'Falha ao listar check-ins');
     }
   }
+
+  static Future<void> apagarCheckin(int id) async {
+    final token = await AuthService.getStoredToken();
+    if (token == null) throw Exception('NÃ£o autenticado');
+
+    final url = Uri.parse('$baseUrl/$id');
+    final response = await http.delete(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      final data = _safeDecode(response.body);
+      throw Exception(data['message'] ?? 'Falha ao apagar check-in');
+    }
+  }
 }
