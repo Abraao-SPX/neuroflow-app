@@ -69,6 +69,38 @@ class CustomDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(
+                Icons.mood,
+                color: Color(0xFF4A6572),
+              ),
+              title: const Text(
+                'Humores',
+                style: TextStyle(
+                  color: Color(0xFF4A6572),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/moods');
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.task_alt,
+                color: Color(0xFF4A6572),
+              ),
+              title: const Text(
+                'Meu Plano',
+                style: TextStyle(
+                  color: Color(0xFF4A6572),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/plan');
+              },
+            ),
+            ListTile(
+              leading: const Icon(
                 Icons.support_agent,
                 color: Color(0xFF4A6572),
               ),

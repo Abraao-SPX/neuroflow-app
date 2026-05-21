@@ -7,6 +7,8 @@ import 'presentation/screens/forgot_password_screen.dart';
 import 'presentation/screens/support_screen.dart';
 import 'presentation/screens/register_screen.dart';
 import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/mood_history_screen.dart';
+import 'presentation/screens/regulation_plan_screen.dart';
 import 'presentation/screens/weekly_summary_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'presentation/screens/alphabet_board_screen.dart';
@@ -75,6 +77,8 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/support': (context) => const SupportScreen(),
         '/home': (context) => const HomeScreen(),
+        '/moods': (context) => const MoodHistoryScreen(),
+        '/plan': (context) => const RegulationPlanScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/weekly': (context) => const WeeklySummaryScreen(),
         '/alphabet-board': (context) => const AlphabetBoardScreen(),
