@@ -12,10 +12,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // 2. Variáveis para guardar o estado (o que foi selecionado)
+  final TextEditingController _otherDiscomfortController =
+      TextEditingController();
   String selectedMood = ''; // Guarda apenas um humor
   List<String> selectedTriggers = []; // Guarda vários gatilhos
 
   bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _otherDiscomfortController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleSaveCheckin() async {
     if (selectedMood.isEmpty) {
@@ -30,13 +38,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      await CheckinService.salvarCheckin(selectedMood, selectedTriggers);
+      await CheckinService.salvarCheckin(
+        selectedMood,
+        selectedTriggers,
+        outroIncomodo: _otherDiscomfortController.text,
+      );
 
       if (!mounted) return;
 
       setState(() {
         selectedMood = '';
         selectedTriggers.clear();
+        _otherDiscomfortController.clear();
         _isSaving = false;
       });
 
@@ -171,6 +184,35 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildTriggerItem(
                     Icons.psychology_outlined,
                     'Dificuldade de concentração',
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _otherDiscomfortController,
+                    maxLines: 3,
+                    maxLength: 500,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'Outros',
+                      hintText: 'Digite o que mais esta te incomodando',
+                      prefixIcon: const Icon(Icons.edit_note_outlined),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.black12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.black12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.green.withValues(alpha: 0.6),
+                          width: 2,
+                        ),
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 30),

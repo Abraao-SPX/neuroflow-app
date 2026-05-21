@@ -24,6 +24,11 @@ CheckinModel.init({
         type: DataTypes.STRING(50),
         allowNull: false
     },
+    outroIncomodo: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        field: 'outro_incomodo'
+    },
     dataCheckin: {
         type: DataTypes.DATEONLY,
         field: 'data_checkin',

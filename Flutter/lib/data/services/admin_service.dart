@@ -100,6 +100,30 @@ class AdminService {
     );
   }
 
+  Future<void> promoteUserToAdmin(int id) async {
+    final token = await AuthService.getStoredToken();
+    if (token == null) {
+      throw Exception('Sessao expirada. Faca login novamente.');
+    }
+
+    var response = await _promoteUserToAdminWithToken(id, token);
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      final refreshed = await AuthService.refreshAccessToken();
+      final refreshedToken = refreshed?['token'];
+      if (refreshedToken is String) {
+        response = await _promoteUserToAdminWithToken(id, refreshedToken);
+      }
+    }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+
+    throw Exception(
+      _extractErrorMessage(response, 'Falha ao tornar usuario admin'),
+    );
+  }
+
   Future<http.Response> _getUsersWithToken(String token) {
     return http.get(
       Uri.parse('$_baseUrl/users'),
@@ -132,6 +156,16 @@ class AdminService {
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({'banned': banned}),
+    );
+  }
+
+  Future<http.Response> _promoteUserToAdminWithToken(int id, String token) {
+    return http.patch(
+      Uri.parse('$_baseUrl/users/$id/admin'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
   }
 

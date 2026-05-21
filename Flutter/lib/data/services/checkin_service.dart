@@ -19,11 +19,16 @@ class CheckinService {
     return {};
   }
 
-  static Future<void> salvarCheckin(String humor, List<String> gatilhos) async {
+  static Future<void> salvarCheckin(
+    String humor,
+    List<String> gatilhos, {
+    String? outroIncomodo,
+  }) async {
     final token = await AuthService.getStoredToken();
     if (token == null) throw Exception('Não autenticado');
 
     final gatilhosUnicos = gatilhos.toSet().toList();
+    final outroIncomodoNormalizado = outroIncomodo?.trim();
     final url = Uri.parse(baseUrl);
     final response = await http.post(
       url,
@@ -31,7 +36,13 @@ class CheckinService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({'humor': humor, 'gatilhos': gatilhosUnicos}),
+      body: jsonEncode({
+        'humor': humor,
+        'gatilhos': gatilhosUnicos,
+        if (outroIncomodoNormalizado != null &&
+            outroIncomodoNormalizado.isNotEmpty)
+          'outroIncomodo': outroIncomodoNormalizado,
+      }),
     );
 
     if (response.statusCode != 201) {

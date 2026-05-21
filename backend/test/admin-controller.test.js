@@ -117,3 +117,35 @@ test('AdminController bans a user and revokes refresh tokens', async () => {
         assert.equal(res.body.data.status, 'banned');
     });
 });
+
+test('AdminController promotes an active user to admin', async () => {
+    const transaction = createTransaction();
+    const user = {
+        id: 9,
+        username: 'Caio',
+        email: 'caio@test.com',
+        role: 'user',
+        status: 'active',
+        createdAt: '2026-05-21',
+        async save(options) {
+            assert.equal(options.transaction, transaction);
+        }
+    };
+
+    await withStubs([
+        [sequelize, { transaction: async () => transaction }],
+        [UserModel, { findByPk: async () => user }]
+    ], async () => {
+        const res = createResponse();
+        await AdminController.promoteUserToAdmin({
+            userId: 1,
+            params: { id: '9' }
+        }, res);
+
+        assert.equal(transaction.committed, true);
+        assert.equal(transaction.rolledBack, false);
+        assert.equal(user.role, 'admin');
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.body.data.role, 'admin');
+    });
+});

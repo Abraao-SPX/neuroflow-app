@@ -187,6 +187,67 @@ class AdminController {
             });
         }
     }
+
+    static async promoteUserToAdmin(req, res) {
+        const transaction = await sequelize.transaction();
+
+        try {
+            const userId = Number.parseInt(req.params.id, 10);
+
+            if (Number.isNaN(userId) || userId <= 0) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: 'ID de usuario invalido.'
+                });
+            }
+
+            const user = await UserModel.findByPk(userId, { transaction });
+            if (!user) {
+                await transaction.rollback();
+                return res.status(404).json({
+                    success: false,
+                    message: 'Usuario nao encontrado.'
+                });
+            }
+
+            if (user.status === 'banned') {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: 'Reative o usuario antes de torna-lo administrador.'
+                });
+            }
+
+            if (user.role === 'admin') {
+                await transaction.commit();
+                return res.status(200).json({
+                    success: true,
+                    message: 'Usuario ja e administrador.',
+                    data: mapUser(user)
+                });
+            }
+
+            user.role = 'admin';
+            await user.save({ transaction });
+
+            await transaction.commit();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Usuario promovido a administrador com sucesso.',
+                data: mapUser(user)
+            });
+        } catch (error) {
+            await transaction.rollback();
+
+            console.error('[AdminController] Erro ao promover usuario para admin:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Erro interno ao promover usuario para administrador.'
+            });
+        }
+    }
 }
 
 module.exports = AdminController;

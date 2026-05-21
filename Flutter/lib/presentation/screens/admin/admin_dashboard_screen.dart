@@ -165,6 +165,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  Future<void> _promoteUserToAdmin(Map<String, dynamic> user) async {
+    final userId = _readUserId(user['id']);
+    if (userId == null) return;
+
+    final name = _readText(user['name'] ?? user['username'], 'Usuario');
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Tornar admin'),
+        content: Text(
+          '$name tera acesso ao painel administrativo e podera gerenciar usuarios.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+            child: const Text('Tornar admin'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await _adminService.promoteUserToAdmin(userId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario promovido a admin.')),
+        );
+      }
+      await _fetchUsers(refreshOnly: true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao tornar admin: $e')),
+        );
+      }
+    }
+  }
+
   List<Map<String, dynamic>> get _filteredUsers {
     final query = _searchController.text.trim().toLowerCase();
     return _users.whereType<Map>().map((user) => Map<String, dynamic>.from(user)).where((user) {
@@ -294,6 +339,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           createdAt: _formatDate(user['created_at']),
                           onBan: () => _setUserBanned(user, true),
                           onUnban: () => _setUserBanned(user, false),
+                          onMakeAdmin: () => _promoteUserToAdmin(user),
                           onDelete: () => _deleteUser(user),
                         ),
                       ),
@@ -495,6 +541,7 @@ class _UserRow extends StatelessWidget {
     required this.createdAt,
     required this.onBan,
     required this.onUnban,
+    required this.onMakeAdmin,
     required this.onDelete,
   });
 
@@ -504,6 +551,7 @@ class _UserRow extends StatelessWidget {
   final String createdAt;
   final VoidCallback onBan;
   final VoidCallback onUnban;
+  final VoidCallback onMakeAdmin;
   final VoidCallback onDelete;
 
   @override
@@ -573,9 +621,19 @@ class _UserRow extends StatelessWidget {
             onSelected: (value) {
               if (value == 'ban') onBan();
               if (value == 'unban') onUnban();
+              if (value == 'makeAdmin') onMakeAdmin();
               if (value == 'delete') onDelete();
             },
             itemBuilder: (context) => [
+              if (role != 'admin' && !banned)
+                const PopupMenuItem(
+                  value: 'makeAdmin',
+                  child: ListTile(
+                    leading: Icon(Icons.admin_panel_settings_outlined, color: Color(0xFF2563EB)),
+                    title: Text('Tornar admin'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               PopupMenuItem(
                 value: banned ? 'unban' : 'ban',
                 child: ListTile(

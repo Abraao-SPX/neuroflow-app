@@ -6,6 +6,7 @@ const TriggerModel = require('../models/TriggerModel');
 const {
     isPlainObject,
     normalizeDateOnly,
+    normalizeOptionalString,
     normalizeRequiredString,
     parsePositiveInteger
 } = require('../utils/validation');
@@ -65,6 +66,18 @@ function normalizeCheckinPayload(body, { requireAll = false } = {}) {
         relationshipData.triggers = gatilhos.value;
     } else if (requireAll) {
         relationshipData.triggers = { ids: [], names: [] };
+    }
+
+    if (body.outroIncomodo !== undefined || body.otherDiscomfort !== undefined) {
+        const outroIncomodo = normalizeOptionalString(
+            body.outroIncomodo ?? body.otherDiscomfort,
+            'Outro incomodo',
+            { max: 500 }
+        );
+        if (outroIncomodo.error) return { error: outroIncomodo.error };
+        data.outroIncomodo = outroIncomodo.value;
+    } else if (requireAll) {
+        data.outroIncomodo = null;
     }
 
     if (body.dataCheckin !== undefined) {
@@ -135,6 +148,8 @@ function mapCheckin(checkin) {
         id: plain.id,
         usuarioId: plain.usuarioId,
         humor: plain.humor,
+        outroIncomodo: plain.outroIncomodo,
+        outro_incomodo: plain.outroIncomodo,
         dataCheckin: plain.dataCheckin,
         data_checkin: plain.dataCheckin,
         createdAt: plain.createdAt,

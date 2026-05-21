@@ -31,6 +31,10 @@ module.exports = {
         type: Sequelize.STRING(50),
         allowNull: false
       },
+      outro_incomodo: {
+        type: Sequelize.TEXT,
+        allowNull: true
+      },
       data_checkin: {
         type: Sequelize.DATEONLY,
         allowNull: false,

@@ -148,6 +148,12 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
     return result;
   }
 
+  String _readOtherDiscomfort(dynamic item) {
+    if (item is! Map) return '';
+    final value = item['outroIncomodo'] ?? item['outro_incomodo'];
+    return value?.toString().trim() ?? '';
+  }
+
   List<_TriggerSlice> _buildTriggerSlices() {
     final counts = <String, int>{};
 
@@ -156,6 +162,10 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
 
       for (final trigger in _uniqueStrings(checkin['gatilhos'])) {
         counts[trigger] = (counts[trigger] ?? 0) + 1;
+      }
+
+      if (_readOtherDiscomfort(checkin).isNotEmpty) {
+        counts['Outros'] = (counts['Outros'] ?? 0) + 1;
       }
     }
 
@@ -270,6 +280,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                       );
                       final humor = item['humor'];
                       final gatilhos = _uniqueStrings(item['gatilhos']);
+                      final outroIncomodo = _readOtherDiscomfort(item);
                       final checkinId = _readCheckinId(item);
                       final isDeleting =
                           checkinId != null &&
@@ -338,7 +349,8 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              if (gatilhos.isNotEmpty) ...[
+                              if (gatilhos.isNotEmpty ||
+                                  outroIncomodo.isNotEmpty) ...[
                                 const SizedBox(height: 10),
                                 const Text(
                                   'O que estava incomodando:',
@@ -354,6 +366,30 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                                     style: const TextStyle(fontSize: 15),
                                   ),
                                 ),
+                                if (outroIncomodo.isNotEmpty) ...[
+                                  const Text(
+                                    'Outros',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFFFF3E8),
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      outroIncomodo,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ],
                           ),
