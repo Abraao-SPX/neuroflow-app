@@ -1,10 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../providers/auth_provider.dart';
 import '../widgets/custom_drawer.dart';
 
 class RegulationPlanScreen extends StatefulWidget {
@@ -344,20 +342,17 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
     final progress = visibleStrategies.isEmpty
         ? 0.0
         : _completedVisibleCount / visibleStrategies.length;
-    final isParent = Provider.of<AuthProvider>(context).isParent;
 
     return Scaffold(
       backgroundColor: _bgBody,
       endDrawer: const CustomDrawer(),
-      floatingActionButton: isParent
-          ? null
-          : FloatingActionButton.extended(
-              backgroundColor: const Color(0xFF4F46E5),
-              foregroundColor: Colors.white,
-              onPressed: _addCustomStrategy,
-              icon: const Icon(Icons.add),
-              label: const Text('Adicionar'),
-            ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFF4F46E5),
+        foregroundColor: Colors.white,
+        onPressed: _addCustomStrategy,
+        icon: const Icon(Icons.add),
+        label: const Text('Adicionar'),
+      ),
       body: Column(
         children: [
           Container(
@@ -414,10 +409,6 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
                         total: visibleStrategies.length,
                         progress: progress,
                       ),
-                      if (isParent) ...[
-                        const SizedBox(height: 12),
-                        const _ReadOnlyPlanCard(),
-                      ],
                       const SizedBox(height: 16),
                       _MoodSelector(
                         moods: _moods,
@@ -445,11 +436,9 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
                           (strategy) => _StrategyCard(
                             strategy: strategy,
                             isCompleted: _completedIds.contains(strategy.id),
-                            onChanged: isParent
-                                ? null
-                                : (checked) =>
-                                      _toggleStrategy(strategy, checked),
-                            onDelete: !isParent && strategy.isCustom
+                            onChanged: (checked) =>
+                                _toggleStrategy(strategy, checked),
+                            onDelete: strategy.isCustom
                                 ? () => _deleteCustomStrategy(strategy)
                                 : null,
                           ),
@@ -769,41 +758,6 @@ class _EmptyPlanCard extends StatelessWidget {
             color: _RegulationPlanScreenState._textColor,
             height: 1.35,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReadOnlyPlanCard extends StatelessWidget {
-  const _ReadOnlyPlanCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-        side: BorderSide(
-          color: _RegulationPlanScreenState._textColor.withValues(alpha: 0.18),
-        ),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.visibility_outlined, color: Color(0xFF4A6572)),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Modo responsavel: este plano fica somente para consulta neste aparelho.',
-                style: TextStyle(
-                  color: _RegulationPlanScreenState._textColor,
-                  height: 1.35,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
