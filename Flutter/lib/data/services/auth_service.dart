@@ -48,6 +48,46 @@ class AuthService {
     }
   }
 
+  static Future<http.Response> _postAuthorizedJson(
+    Uri url,
+    Map<String, dynamic> body,
+  ) async {
+    final token = await getStoredToken();
+    if (token == null) throw Exception('Nao autenticado.');
+
+    try {
+      return await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(_requestTimeout);
+    } on TimeoutException {
+      throw Exception('Tempo esgotado ao conectar com a API.');
+    } on http.ClientException {
+      throw Exception('Nao foi possivel conectar com a API.');
+    }
+  }
+
+  static Future<http.Response> _getAuthorizedJson(Uri url) async {
+    final token = await getStoredToken();
+    if (token == null) throw Exception('Nao autenticado.');
+
+    try {
+      return await http
+          .get(url, headers: {'Authorization': 'Bearer $token'})
+          .timeout(_requestTimeout);
+    } on TimeoutException {
+      throw Exception('Tempo esgotado ao conectar com a API.');
+    } on http.ClientException {
+      throw Exception('Nao foi possivel conectar com a API.');
+    }
+  }
+
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
@@ -243,5 +283,53 @@ class AuthService {
     } else {
       throw Exception(data['message'] ?? 'Erro ao redefinir senha.');
     }
+  }
+
+  static Future<Map<String, dynamic>> getParentAccessStatus() async {
+    final response = await _getAuthorizedJson(
+      Uri.parse('$baseUrl/parent-access'),
+    );
+    final data = _safeDecode(response.body);
+
+    if (response.statusCode == 200) {
+      final status = data['data'];
+      return status is Map<String, dynamic> ? status : {};
+    }
+
+    throw Exception(data['message'] ?? 'Erro ao carregar responsavel.');
+  }
+
+  static Future<Map<String, dynamic>> requestParentAccessCode(
+    String email,
+  ) async {
+    final response = await _postAuthorizedJson(
+      Uri.parse('$baseUrl/parent-access/request-code'),
+      {'email': email},
+    );
+    final data = _safeDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return data;
+    }
+
+    throw Exception(data['message'] ?? 'Erro ao enviar codigo.');
+  }
+
+  static Future<Map<String, dynamic>> confirmParentAccess({
+    required String email,
+    required String code,
+    required String password,
+  }) async {
+    final response = await _postAuthorizedJson(
+      Uri.parse('$baseUrl/parent-access/confirm'),
+      {'email': email, 'code': code, 'password': password},
+    );
+    final data = _safeDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return data;
+    }
+
+    throw Exception(data['message'] ?? 'Erro ao confirmar responsavel.');
   }
 }

@@ -159,6 +159,16 @@ function mapCheckin(checkin) {
     };
 }
 
+function denyParentWrite(req, res) {
+    if (req.userRole !== 'parent') return false;
+
+    res.status(403).json({
+        success: false,
+        message: 'Responsaveis possuem acesso somente para visualizacao.'
+    });
+    return true;
+}
+
 async function findUserCheckin(checkinId, userId, transaction) {
     return CheckinModel.findOne({
         where: {
@@ -179,7 +189,12 @@ class CheckinController {
         const transaction = await sequelize.transaction();
 
         try {
-            const usuarioId = req.user.id;
+            if (denyParentWrite(req, res)) {
+                await transaction.rollback();
+                return;
+            }
+
+            const usuarioId = req.userId;
             const { data, relationshipData, error } = normalizeCheckinPayload(req.body, { requireAll: true });
 
             if (error) {
@@ -212,7 +227,7 @@ class CheckinController {
 
     static async getMyCheckins(req, res) {
         try {
-            const usuarioId = req.user.id;
+            const usuarioId = req.userId;
             const checkins = await CheckinModel.findAll({
                 where: { usuarioId },
                 include: [{
@@ -236,7 +251,7 @@ class CheckinController {
                 return res.status(400).json({ success: false, message: 'ID do check-in invalido.' });
             }
 
-            const checkin = await findUserCheckin(checkinId, req.user.id);
+            const checkin = await findUserCheckin(checkinId, req.userId);
 
             if (!checkin) {
                 return res.status(404).json({ success: false, message: 'Check-in nao encontrado.' });
@@ -267,6 +282,11 @@ class CheckinController {
         const transaction = await sequelize.transaction();
 
         try {
+            if (denyParentWrite(req, res)) {
+                await transaction.rollback();
+                return;
+            }
+
             const checkinId = parsePositiveInteger(req.params.id);
             if (!checkinId) {
                 await transaction.rollback();
@@ -279,7 +299,7 @@ class CheckinController {
                 return res.status(400).json({ success: false, message: error });
             }
 
-            const checkin = await findUserCheckin(checkinId, req.user.id, transaction);
+            const checkin = await findUserCheckin(checkinId, req.userId, transaction);
             if (!checkin) {
                 await transaction.rollback();
                 return res.status(404).json({ success: false, message: 'Check-in nao encontrado.' });
@@ -300,7 +320,7 @@ class CheckinController {
 
             await transaction.commit();
 
-            const updatedCheckin = await findUserCheckin(checkinId, req.user.id);
+            const updatedCheckin = await findUserCheckin(checkinId, req.userId);
             return res.status(200).json({ success: true, message: successMessage, data: mapCheckin(updatedCheckin) });
         } catch (error) {
             await transaction.rollback();
@@ -311,6 +331,8 @@ class CheckinController {
 
     static async delete(req, res) {
         try {
+            if (denyParentWrite(req, res)) return;
+
             const checkinId = parsePositiveInteger(req.params.id);
             if (!checkinId) {
                 return res.status(400).json({ success: false, message: 'ID do check-in invalido.' });
@@ -319,7 +341,7 @@ class CheckinController {
             const deletedCount = await CheckinModel.destroy({
                 where: {
                     id: checkinId,
-                    usuarioId: req.user.id
+                    usuarioId: req.userId
                 }
             });
 

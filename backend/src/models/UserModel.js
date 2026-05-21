@@ -20,7 +20,10 @@ class UserModel extends Model {
             name: this.username,
             email: this.email,
             role: this.role,
-            status: this.status
+            status: this.status,
+            parentEmail: this.parentEmail,
+            parentVerifiedAt: this.parentVerifiedAt,
+            parentChildId: this.parentChildId
         };
     }
 
@@ -29,7 +32,8 @@ class UserModel extends Model {
             {
                 id: user.id,
                 username: user.username,
-                role: user.role
+                role: user.role,
+                parentChildId: user.parentChildId || null
             },
             getJwtSecret(),
             {
@@ -86,6 +90,23 @@ class UserModel extends Model {
         await user.save();
         return user;
     }
+
+    static hashVerificationCode(code) {
+        return hashResetToken(code);
+    }
+
+    static async updateParentVerification(userId, email, code, expires) {
+        await this.update(
+            {
+                parentEmail: email,
+                parentVerificationCode: hashResetToken(code),
+                parentVerificationExpires: expires,
+                parentVerifiedAt: null,
+                parentUserId: null
+            },
+            { where: { id: userId } }
+        );
+    }
 }
 
 UserModel.init(
@@ -125,6 +146,47 @@ UserModel.init(
             defaultValue: 'active',
             validate: {
                 isIn: [['active', 'banned']]
+            }
+        },
+        parentEmail: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: 'parent_email',
+            validate: {
+                isEmail: true
+            }
+        },
+        parentVerificationCode: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            field: 'parent_verification_code'
+        },
+        parentVerificationExpires: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'parent_verification_expires'
+        },
+        parentVerifiedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'parent_verified_at'
+        },
+        parentUserId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            field: 'parent_user_id',
+            references: {
+                model: 'Usuarios',
+                key: 'id'
+            }
+        },
+        parentChildId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            field: 'parent_child_id',
+            references: {
+                model: 'Usuarios',
+                key: 'id'
             }
         },
         resetToken: {

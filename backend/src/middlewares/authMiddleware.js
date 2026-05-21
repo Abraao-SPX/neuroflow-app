@@ -31,7 +31,16 @@ const authMiddleware = async (req, res, next) => {
         }
 
         const user = await UserModel.findByPk(decoded.id, {
-            attributes: ['id', 'username', 'email', 'role', 'status']
+            attributes: [
+                'id',
+                'username',
+                'email',
+                'role',
+                'status',
+                'parentChildId',
+                'parentEmail',
+                'parentVerifiedAt'
+            ]
         });
 
         if (!user) {
@@ -43,8 +52,10 @@ const authMiddleware = async (req, res, next) => {
         }
 
         req.user = user.toSafeJSON();
-        req.userId = decoded.id;
+        req.authenticatedUserId = decoded.id;
+        req.userId = user.role === 'parent' && user.parentChildId ? user.parentChildId : decoded.id;
         req.userRole = user.role;
+        req.isParentUser = user.role === 'parent';
         return next();
     } catch (err) {
         return res.status(403).json({ success: false, message: 'Token invalido ou expirado.' });

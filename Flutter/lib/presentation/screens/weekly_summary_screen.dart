@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../data/services/checkin_service.dart';
+import '../../providers/auth_provider.dart';
 import '../widgets/custom_drawer.dart';
 
 class WeeklySummaryScreen extends StatefulWidget {
@@ -206,6 +208,7 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
     const Color bgHeader = Color(0xFFD1E3E7);
     const Color bgBody = Color(0xFFFDF9F0);
     const Color textColor = Color(0xFF4A6572);
+    final isParent = Provider.of<AuthProvider>(context).isParent;
 
     return Scaffold(
       backgroundColor: bgBody,
@@ -318,27 +321,28 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    child: isDeleting
-                                        ? const Padding(
-                                            padding: EdgeInsets.all(8),
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
+                                  if (!isParent)
+                                    SizedBox(
+                                      width: 36,
+                                      height: 36,
+                                      child: isDeleting
+                                          ? const Padding(
+                                              padding: EdgeInsets.all(8),
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : IconButton(
+                                              tooltip: 'Apagar registro',
+                                              padding: EdgeInsets.zero,
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                color: Colors.redAccent,
+                                              ),
+                                              onPressed: () =>
+                                                  _deleteCheckin(item),
                                             ),
-                                          )
-                                        : IconButton(
-                                            tooltip: 'Apagar registro',
-                                            padding: EdgeInsets.zero,
-                                            icon: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.redAccent,
-                                            ),
-                                            onPressed: () =>
-                                                _deleteCheckin(item),
-                                          ),
-                                  ),
+                                    ),
                                 ],
                               ),
                               const Divider(height: 20),

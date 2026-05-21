@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../data/services/checkin_service.dart';
+import '../../providers/auth_provider.dart';
 import '../widgets/custom_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -43,6 +45,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _handleSaveCheckin() async {
+    if (Provider.of<AuthProvider>(context, listen: false).isParent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Responsaveis possuem acesso somente para visualizacao.',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (selectedMood.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecione um humor primeiro!')),
@@ -99,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     const Color bgHeader = Color(0xFFD1E3E7);
     const Color bgBody = Color(0xFFFDF9F0);
+    final isParent = Provider.of<AuthProvider>(context).isParent;
 
     return Scaffold(
       backgroundColor: bgBody,
@@ -166,6 +180,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  if (isParent) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.visibility_outlined,
+                            color: Color(0xFF4A6572),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Modo responsavel: voce pode visualizar os registros do filho, mas nao pode criar novos check-ins.',
+                              style: TextStyle(color: Color(0xFF4A6572)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final cardWidth = (constraints.maxWidth - 24) / 3;
@@ -221,6 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: _otherDiscomfortController,
+                    readOnly: isParent,
                     maxLines: 3,
                     maxLength: 500,
                     textInputAction: TextInputAction.done,
@@ -253,36 +296,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 30),
 
-                  ElevatedButton(
-                    onPressed: _isSaving ? null : _handleSaveCheckin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A6572),
-                      disabledBackgroundColor: const Color(0xFFD1E3E7),
-                      disabledForegroundColor: const Color(0xFF4A6572),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 55),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                  if (isParent)
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/weekly');
+                      },
+                      icon: const Icon(Icons.table_chart_outlined),
+                      label: const Text('Ver tabelas do filho'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 55),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                       ),
+                    )
+                  else
+                    ElevatedButton(
+                      onPressed: _isSaving ? null : _handleSaveCheckin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4A6572),
+                        disabledBackgroundColor: const Color(0xFFD1E3E7),
+                        disabledForegroundColor: const Color(0xFF4A6572),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 55),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_outline),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Salvar Check-in",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                     ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.check_circle_outline),
-                              SizedBox(width: 8),
-                              Text(
-                                "Salvar Check-in",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                  ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -310,6 +368,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () {
+          if (Provider.of<AuthProvider>(context, listen: false).isParent) {
+            return;
+          }
+
           setState(() {
             selectedMood = label;
           });
@@ -364,8 +426,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         color: const Color(0xFF4A6572),
-                        fontWeight:
-                            isSelected ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight: isSelected
+                            ? FontWeight.w800
+                            : FontWeight.w600,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -395,6 +458,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
+          if (Provider.of<AuthProvider>(context, listen: false).isParent) {
+            return;
+          }
+
           setState(() {
             if (isSelected) {
               selectedTriggers.remove(label);
@@ -432,8 +499,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 15,
                     color: const Color(0xFF1F2933),
-                    fontWeight:
-                        isSelected ? FontWeight.w800 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                   ),
                 ),
               ),

@@ -30,5 +30,8 @@ router.get('/me', authMiddleware, AuthController.protected);
 router.post('/logout', AuthController.logout);
 router.post('/forgot-password', passwordResetLimiter, AuthController.forgotPassword);
 router.post('/reset-password', passwordResetLimiter, AuthController.resetPassword);
+router.get('/parent-access', authMiddleware, AuthController.getParentAccessStatus);
+router.post('/parent-access/request-code', authMiddleware, passwordResetLimiter, AuthController.requestParentAccessCode);
+router.post('/parent-access/confirm', authMiddleware, passwordResetLimiter, AuthController.confirmParentAccessCode);
 
 module.exports = router;

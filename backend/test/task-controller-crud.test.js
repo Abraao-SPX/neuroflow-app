@@ -81,6 +81,26 @@ test('TaskController creates a task with normalized data and authenticated user 
     });
 });
 
+test('TaskController blocks parent write access', async () => {
+    let createWasCalled = false;
+    await withTaskModelStub({
+        create: async () => {
+            createWasCalled = true;
+        }
+    }, async () => {
+        const res = createResponse();
+        await TaskController.createTask({
+            userId: 7,
+            userRole: 'parent',
+            body: { title: 'Estudar' }
+        }, res);
+
+        assert.equal(res.statusCode, 403);
+        assert.equal(res.body.success, false);
+        assert.equal(createWasCalled, false);
+    });
+});
+
 test('TaskController rejects invalid create payloads before persistence', async () => {
     let createWasCalled = false;
     await withTaskModelStub({

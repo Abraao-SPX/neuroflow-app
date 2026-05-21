@@ -13,6 +13,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isInitialized => _isInitialized;
   bool get isLoggedIn => _token != null;
+  bool get isParent => _user?['role'] == 'parent';
+  Map<String, dynamic>? get child {
+    final childData = _user?['child'];
+    return childData is Map<String, dynamic> ? childData : null;
+  }
 
   // Inicializa tentando restaurar a sessao por refresh token.
   Future<void> initAuth() async {

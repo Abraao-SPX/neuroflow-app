@@ -30,6 +30,15 @@ function createTransporter() {
     });
 }
 
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 async function sendPasswordResetEmail({ to, token, expires }) {
     if (!isMailConfigured()) {
         return false;
@@ -40,6 +49,7 @@ async function sendPasswordResetEmail({ to, token, expires }) {
         dateStyle: 'short',
         timeStyle: 'short'
     });
+    const safeChildName = escapeHtml(childName);
 
     await createTransporter().sendMail({
         from: config.from,
@@ -65,7 +75,43 @@ async function sendPasswordResetEmail({ to, token, expires }) {
     return true;
 }
 
+async function sendParentVerificationEmail({ to, childName, code, expires }) {
+    if (!isMailConfigured()) {
+        return false;
+    }
+
+    const config = getMailConfig();
+    const expiresAt = expires.toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+    });
+
+    await createTransporter().sendMail({
+        from: config.from,
+        to,
+        subject: 'Codigo de acesso dos responsaveis - NeuroFlow',
+        text: [
+            `Voce foi convidado para acompanhar ${childName} no NeuroFlow.`,
+            '',
+            `Codigo de verificacao: ${code}`,
+            `Valido ate: ${expiresAt}`,
+            '',
+            'Depois de validar o codigo, voce podera criar sua senha e entrar com este e-mail.'
+        ].join('\n'),
+        html: `
+            <p>Voce foi convidado para acompanhar <strong>${safeChildName}</strong> no NeuroFlow.</p>
+            <p><strong>Codigo de verificacao:</strong></p>
+            <p style="font-size: 28px; letter-spacing: 6px;"><strong>${code}</strong></p>
+            <p><strong>Valido ate:</strong> ${expiresAt}</p>
+            <p>Depois de validar o codigo, voce podera criar sua senha e entrar com este e-mail.</p>
+        `
+    });
+
+    return true;
+}
+
 module.exports = {
     isMailConfigured,
+    sendParentVerificationEmail,
     sendPasswordResetEmail
 };

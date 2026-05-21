@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../providers/auth_provider.dart';
 import '../widgets/custom_drawer.dart';
 
 class RegulationPlanScreen extends StatefulWidget {
@@ -42,7 +44,8 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
       id: 'ansioso-grounding',
       mood: 'Ansioso',
       title: 'Aterramento 5-4-3-2-1',
-      description: 'Nomeie 5 coisas que ve, 4 que toca, 3 que ouve, 2 cheiros e 1 sabor.',
+      description:
+          'Nomeie 5 coisas que ve, 4 que toca, 3 que ouve, 2 cheiros e 1 sabor.',
       icon: Icons.touch_app_outlined,
       color: Color(0xFF9EB6C8),
     ),
@@ -50,7 +53,8 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
       id: 'estressado-release',
       mood: 'Estressado',
       title: 'Soltar tensao do corpo',
-      description: 'Contraia ombros, maos e pernas por 5 segundos e solte devagar.',
+      description:
+          'Contraia ombros, maos e pernas por 5 segundos e solte devagar.',
       icon: Icons.self_improvement,
       color: Color(0xFFE89F71),
     ),
@@ -58,7 +62,8 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
       id: 'estressado-pause',
       mood: 'Estressado',
       title: 'Reduzir estimulos por 5 minutos',
-      description: 'Afaste notificacoes, diminua luz ou som e escolha uma tarefa pequena.',
+      description:
+          'Afaste notificacoes, diminua luz ou som e escolha uma tarefa pequena.',
       icon: Icons.pause_circle_outline,
       color: Color(0xFFE49A8F),
     ),
@@ -66,7 +71,8 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
       id: 'triste-contact',
       mood: 'Triste',
       title: 'Mandar mensagem para alguem seguro',
-      description: 'Escolha uma pessoa de confianca e envie uma mensagem simples.',
+      description:
+          'Escolha uma pessoa de confianca e envie uma mensagem simples.',
       icon: Icons.chat_bubble_outline,
       color: Color(0xFF9B87C9),
     ),
@@ -90,7 +96,8 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
       id: 'cansado-priority',
       mood: 'Cansado',
       title: 'Escolher so uma prioridade',
-      description: 'Defina a menor tarefa importante e deixe o resto para depois.',
+      description:
+          'Defina a menor tarefa importante e deixe o resto para depois.',
       icon: Icons.flag_outlined,
       color: Color(0xFFE49A8F),
     ),
@@ -337,17 +344,20 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
     final progress = visibleStrategies.isEmpty
         ? 0.0
         : _completedVisibleCount / visibleStrategies.length;
+    final isParent = Provider.of<AuthProvider>(context).isParent;
 
     return Scaffold(
       backgroundColor: _bgBody,
       endDrawer: const CustomDrawer(),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF4F46E5),
-        foregroundColor: Colors.white,
-        onPressed: _addCustomStrategy,
-        icon: const Icon(Icons.add),
-        label: const Text('Adicionar'),
-      ),
+      floatingActionButton: isParent
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF4F46E5),
+              foregroundColor: Colors.white,
+              onPressed: _addCustomStrategy,
+              icon: const Icon(Icons.add),
+              label: const Text('Adicionar'),
+            ),
       body: Column(
         children: [
           Container(
@@ -404,6 +414,10 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
                         total: visibleStrategies.length,
                         progress: progress,
                       ),
+                      if (isParent) ...[
+                        const SizedBox(height: 12),
+                        const _ReadOnlyPlanCard(),
+                      ],
                       const SizedBox(height: 16),
                       _MoodSelector(
                         moods: _moods,
@@ -431,9 +445,11 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
                           (strategy) => _StrategyCard(
                             strategy: strategy,
                             isCompleted: _completedIds.contains(strategy.id),
-                            onChanged: (checked) =>
-                                _toggleStrategy(strategy, checked),
-                            onDelete: strategy.isCustom
+                            onChanged: isParent
+                                ? null
+                                : (checked) =>
+                                      _toggleStrategy(strategy, checked),
+                            onDelete: !isParent && strategy.isCustom
                                 ? () => _deleteCustomStrategy(strategy)
                                 : null,
                           ),
@@ -610,7 +626,7 @@ class _StrategyCard extends StatelessWidget {
 
   final _PlanStrategy strategy;
   final bool isCompleted;
-  final ValueChanged<bool?> onChanged;
+  final ValueChanged<bool?>? onChanged;
   final VoidCallback? onDelete;
 
   @override
@@ -636,7 +652,10 @@ class _StrategyCard extends StatelessWidget {
                 color: strategy.color.withValues(alpha: 0.28),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(strategy.icon, color: _RegulationPlanScreenState._textColor),
+              child: Icon(
+                strategy.icon,
+                color: _RegulationPlanScreenState._textColor,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -693,8 +712,9 @@ class _StrategyCard extends StatelessWidget {
                     Text(
                       strategy.description,
                       style: TextStyle(
-                        color: _RegulationPlanScreenState._textColor
-                            .withValues(alpha: 0.76),
+                        color: _RegulationPlanScreenState._textColor.withValues(
+                          alpha: 0.76,
+                        ),
                         fontSize: 13,
                         height: 1.35,
                       ),
@@ -713,7 +733,10 @@ class _StrategyCard extends StatelessWidget {
                 if (onDelete != null)
                   IconButton(
                     tooltip: 'Remover estrategia',
-                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.redAccent,
+                    ),
                     onPressed: onDelete,
                   ),
               ],
@@ -746,6 +769,41 @@ class _EmptyPlanCard extends StatelessWidget {
             color: _RegulationPlanScreenState._textColor,
             height: 1.35,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadOnlyPlanCard extends StatelessWidget {
+  const _ReadOnlyPlanCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: BorderSide(
+          color: _RegulationPlanScreenState._textColor.withValues(alpha: 0.18),
+        ),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.visibility_outlined, color: Color(0xFF4A6572)),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Modo responsavel: este plano fica somente para consulta neste aparelho.',
+                style: TextStyle(
+                  color: _RegulationPlanScreenState._textColor,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

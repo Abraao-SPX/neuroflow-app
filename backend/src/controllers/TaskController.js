@@ -7,6 +7,16 @@ const {
     parsePositiveInteger
 } = require('../utils/validation');
 
+function denyParentWrite(req, res) {
+    if (req.userRole !== 'parent') return false;
+
+    res.status(403).json({
+        success: false,
+        message: 'Responsaveis possuem acesso somente para visualizacao.'
+    });
+    return true;
+}
+
 function normalizeTaskPayload(body, { requireAll = false } = {}) {
     if (!isPlainObject(body)) {
         return { error: 'Corpo da requisicao deve ser um objeto JSON.' };
@@ -94,6 +104,8 @@ class TaskController {
 
     static async createTask(req, res) {
         try {
+            if (denyParentWrite(req, res)) return;
+
             if (!req.userId) {
                 return res.status(401).json({ success: false, message: 'Acesso negado.' });
             }
@@ -126,6 +138,8 @@ class TaskController {
 
     static async replaceTask(req, res) {
         try {
+            if (denyParentWrite(req, res)) return;
+
             if (!req.userId) {
                 return res.status(401).json({ success: false, message: 'Acesso negado.' });
             }
@@ -159,6 +173,8 @@ class TaskController {
 
     static async updateTask(req, res) {
         try {
+            if (denyParentWrite(req, res)) return;
+
             if (!req.userId) {
                 return res.status(401).json({ success: false, message: 'Acesso negado.' });
             }
@@ -192,6 +208,8 @@ class TaskController {
 
     static async deleteTask(req, res) {
         try {
+            if (denyParentWrite(req, res)) return;
+
             if (!req.userId) {
                 return res.status(401).json({ success: false, message: 'Acesso negado.' });
             }

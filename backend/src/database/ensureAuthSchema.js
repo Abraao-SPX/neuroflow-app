@@ -60,6 +60,23 @@ async function ensureAuthSchema(sequelize) {
             await queryInterface.removeIndex('Usuarios', index.name);
         }
     }
+
+    table = await queryInterface.describeTable('Usuarios');
+
+    const optionalColumns = [
+        ['parent_email', { type: DataTypes.STRING, allowNull: true }],
+        ['parent_verification_code', { type: DataTypes.STRING, allowNull: true }],
+        ['parent_verification_expires', { type: DataTypes.DATE, allowNull: true }],
+        ['parent_verified_at', { type: DataTypes.DATE, allowNull: true }],
+        ['parent_user_id', { type: DataTypes.INTEGER, allowNull: true }],
+        ['parent_child_id', { type: DataTypes.INTEGER, allowNull: true }]
+    ];
+
+    for (const [columnName, definition] of optionalColumns) {
+        if (!table[columnName]) {
+            await queryInterface.addColumn('Usuarios', columnName, definition);
+        }
+    }
 }
 
 module.exports = ensureAuthSchema;
