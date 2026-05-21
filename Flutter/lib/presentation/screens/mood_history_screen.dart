@@ -48,6 +48,7 @@ class _MoodHistoryScreenState extends State<MoodHistoryScreen> {
   String _moodEmoji(String mood) {
     final normalized = mood.toLowerCase();
     if (normalized.contains('ansioso')) return '😰';
+    if (normalized.contains('estress')) return '😤';
     if (normalized.contains('otimo') || normalized.contains('ótimo')) {
       return '😊';
     }

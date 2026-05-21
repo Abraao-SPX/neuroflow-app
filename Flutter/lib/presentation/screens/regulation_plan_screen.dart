@@ -22,6 +22,7 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
   static const List<String> _moods = [
     'Todos',
     'Ansioso',
+    'Estressado',
     'Triste',
     'Cansado',
     'Normal',
@@ -44,6 +45,22 @@ class _RegulationPlanScreenState extends State<RegulationPlanScreen> {
       description: 'Nomeie 5 coisas que ve, 4 que toca, 3 que ouve, 2 cheiros e 1 sabor.',
       icon: Icons.touch_app_outlined,
       color: Color(0xFF9EB6C8),
+    ),
+    _PlanStrategy(
+      id: 'estressado-release',
+      mood: 'Estressado',
+      title: 'Soltar tensao do corpo',
+      description: 'Contraia ombros, maos e pernas por 5 segundos e solte devagar.',
+      icon: Icons.self_improvement,
+      color: Color(0xFFE89F71),
+    ),
+    _PlanStrategy(
+      id: 'estressado-pause',
+      mood: 'Estressado',
+      title: 'Reduzir estimulos por 5 minutos',
+      description: 'Afaste notificacoes, diminua luz ou som e escolha uma tarefa pequena.',
+      icon: Icons.pause_circle_outline,
+      color: Color(0xFFE49A8F),
     ),
     _PlanStrategy(
       id: 'triste-contact',

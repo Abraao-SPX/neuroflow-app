@@ -33,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _MoodOption('Cansado', '😔', Color(0xFFE7BE8C)),
     _MoodOption('Triste', '😞', Color(0xFF9B87C9)),
     _MoodOption('Ansioso', '😰', Color(0xFFE49A8F)),
+    _MoodOption('Estressado', '😤', Color(0xFFE89F71)),
   ];
 
   @override
@@ -165,22 +166,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  SizedBox(
-                    height: 126,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: _moodOptions.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        final mood = _moodOptions[index];
-                        return _buildMoodItem(
-                          mood.label,
-                          mood.emoji,
-                          mood.color,
-                        );
-                      },
-                    ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final cardWidth = (constraints.maxWidth - 24) / 3;
+
+                      return Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          for (final mood in _moodOptions)
+                            _buildMoodItem(
+                              mood.label,
+                              mood.emoji,
+                              mood.color,
+                              width: cardWidth,
+                            ),
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 30),
@@ -292,7 +295,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // --- FUNÇÕES AUXILIARES COM LÓGICA DE CLIQUE ---
 
-  Widget _buildMoodItem(String label, String emoji, Color activeColor) {
+  Widget _buildMoodItem(
+    String label,
+    String emoji,
+    Color activeColor, {
+    required double width,
+  }) {
     bool isSelected = selectedMood == label;
 
     return Semantics(
@@ -308,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: 104,
+          width: width,
           padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
           decoration: BoxDecoration(
             color: isSelected
