@@ -147,13 +147,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 20),
 
                   // --- EMOJIS DE HUMOR ---
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    spacing: 14,
+                    runSpacing: 14,
+                    alignment: WrapAlignment.spaceBetween,
                     children: [
                       _buildMoodItem('Ótimo', '😊', selectedGreen),
                       _buildMoodItem('Normal', '😐', Colors.white),
                       _buildMoodItem('Cansado', '😔', Colors.white),
                       _buildMoodItem('Triste', '😞', Colors.white),
+                      _buildMoodItem('Ansioso', '😰', Colors.white),
                     ],
                   ),
 
@@ -260,34 +263,39 @@ class _HomeScreenState extends State<HomeScreen> {
           selectedMood = label; // Atualiza a tela
         });
       },
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? activeColor
-                  : Colors.white, // Muda a cor se selecionado
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
                 color: isSelected
-                    ? Colors.green.withValues(alpha: 0.5)
-                    : Colors.black12,
-                width: isSelected ? 2 : 1,
+                    ? activeColor
+                    : Colors.white, // Muda a cor se selecionado
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: isSelected
+                      ? Colors.green.withValues(alpha: 0.5)
+                      : Colors.black12,
+                  width: isSelected ? 2 : 1,
+                ),
               ),
+              child: Text(emoji, style: const TextStyle(fontSize: 30)),
             ),
-            child: Text(emoji, style: const TextStyle(fontSize: 30)),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isSelected ? Colors.black : Colors.black54,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected ? Colors.black : Colors.black54,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

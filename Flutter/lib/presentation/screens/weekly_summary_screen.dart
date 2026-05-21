@@ -154,6 +154,30 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
     return value?.toString().trim() ?? '';
   }
 
+  String _readMood(dynamic item) {
+    if (item is! Map) return 'Sem registro';
+    final value = item['humor']?.toString().trim();
+    return value == null || value.isEmpty ? 'Sem registro' : value;
+  }
+
+  List<MapEntry<String, int>> _buildMoodEntries() {
+    final counts = <String, int>{};
+
+    for (final checkin in _checkins) {
+      final mood = _readMood(checkin);
+      counts[mood] = (counts[mood] ?? 0) + 1;
+    }
+
+    final entries = counts.entries.toList()
+      ..sort((a, b) {
+        final countCompare = b.value.compareTo(a.value);
+        if (countCompare != 0) return countCompare;
+        return a.key.compareTo(b.key);
+      });
+
+    return entries;
+  }
+
   List<_TriggerSlice> _buildTriggerSlices() {
     final counts = <String, int>{};
 
@@ -264,16 +288,24 @@ class _WeeklySummaryScreenState extends State<WeeklySummaryScreen> {
                 ? const Center(child: Text('Nenhum dado registrado na semana.'))
                 : ListView.builder(
                     padding: const EdgeInsets.all(20),
-                    itemCount: _checkins.length + 1,
+                    itemCount: _checkins.length + 2,
                     itemBuilder: (context, index) {
                       if (index == 0) {
+                        return _MoodSummaryTable(
+                          entries: _buildMoodEntries(),
+                          total: _checkins.length,
+                          textColor: textColor,
+                        );
+                      }
+
+                      if (index == 1) {
                         return _WeeklyTriggersChart(
                           slices: _buildTriggerSlices(),
                           textColor: textColor,
                         );
                       }
 
-                      final item = _checkins[index - 1];
+                      final item = _checkins[index - 2];
                       final formattedDate = _formatDateTime(
                         item['data_checkin'],
                         item['createdAt'],
@@ -414,6 +446,168 @@ class _TriggerSlice {
   final String label;
   final int value;
   final Color color;
+}
+
+class _MoodSummaryTable extends StatelessWidget {
+  const _MoodSummaryTable({
+    required this.entries,
+    required this.total,
+    required this.textColor,
+  });
+
+  final List<MapEntry<String, int>> entries;
+  final int total;
+  final Color textColor;
+
+  String _moodEmoji(String mood) {
+    final normalized = mood.toLowerCase();
+    if (normalized.contains('ansioso')) return '😰';
+    if (normalized.contains('otimo') || normalized.contains('ótimo')) {
+      return '😊';
+    }
+    if (normalized.contains('normal')) return '😐';
+    if (normalized.contains('cansado')) return '😔';
+    if (normalized.contains('triste')) return '😞';
+    return '🙂';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 18),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: BorderSide(color: textColor.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.mood_outlined, color: Color(0xFF4F46E5)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Como voce estava se sentindo',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Resumo dos humores registrados nesta semana',
+              style: TextStyle(
+                color: textColor.withValues(alpha: 0.75),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (entries.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                child: Center(
+                  child: Text(
+                    'Nenhum humor registrado ainda.',
+                    style: TextStyle(color: textColor.withValues(alpha: 0.75)),
+                  ),
+                ),
+              )
+            else
+              Table(
+                columnWidths: const {
+                  0: FlexColumnWidth(),
+                  1: FixedColumnWidth(70),
+                  2: FixedColumnWidth(72),
+                },
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: [
+                  TableRow(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1E3E7).withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    children: const [
+                      _MoodTableHeader('Humor'),
+                      _MoodTableHeader('Qtd.'),
+                      _MoodTableHeader('%'),
+                    ],
+                  ),
+                  for (final entry in entries)
+                    TableRow(
+                      children: [
+                        _MoodTableCell(
+                          '${_moodEmoji(entry.key)} ${entry.key}',
+                          alignRight: false,
+                        ),
+                        _MoodTableCell('${entry.value}x'),
+                        _MoodTableCell(
+                          total == 0
+                              ? '0%'
+                              : '${((entry.value / total) * 100).round()}%',
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MoodTableHeader extends StatelessWidget {
+  const _MoodTableHeader(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF4A6572),
+          fontSize: 12,
+        ),
+        textAlign: text == 'Humor' ? TextAlign.left : TextAlign.right,
+      ),
+    );
+  }
+}
+
+class _MoodTableCell extends StatelessWidget {
+  const _MoodTableCell(this.text, {this.alignRight = true});
+
+  final String text;
+  final bool alignRight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+      child: Text(
+        text,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Color(0xFF4A6572),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        textAlign: alignRight ? TextAlign.right : TextAlign.left,
+      ),
+    );
+  }
 }
 
 class _WeeklyTriggersChart extends StatelessWidget {
