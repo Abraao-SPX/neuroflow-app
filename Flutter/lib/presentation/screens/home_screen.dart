@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         selectedMood = '';
         selectedTriggers.clear();
+        _isSaving = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -46,8 +47,13 @@ class _HomeScreenState extends State<HomeScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+      Navigator.pushReplacementNamed(context, '/weekly');
     } catch (e) {
       if (!mounted) return;
+
+      setState(() {
+        _isSaving = false;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -56,12 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
     }
   }
 

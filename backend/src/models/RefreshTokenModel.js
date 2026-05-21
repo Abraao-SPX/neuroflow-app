@@ -70,6 +70,10 @@ class RefreshTokenModel extends Model {
             return null;
         }
 
+        if (storedToken.user.status === 'banned') {
+            return null;
+        }
+
         if (storedToken.user.id !== payload.id) {
             return null;
         }

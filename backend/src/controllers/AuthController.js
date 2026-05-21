@@ -93,6 +93,10 @@ class AuthController {
                 return res.status(401).json({ success: false, message: 'Credenciais inválidas' });
             }
 
+            if (user.status === 'banned') {
+                return res.status(403).json({ success: false, message: 'Conta banida. Entre em contato com o suporte.' });
+            }
+
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
                 return res.status(401).json({ success: false, message: 'Credenciais inválidas' });

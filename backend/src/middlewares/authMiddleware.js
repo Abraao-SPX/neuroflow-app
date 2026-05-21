@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const { getJwtSecret } = require('../config/auth');
+const UserModel = require('../models/UserModel');
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -29,13 +30,21 @@ const authMiddleware = (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Token invalido.' });
         }
 
-        req.user = {
-            id: decoded.id,
-            username: decoded.username,
-            role: decoded.role
-        };
+        const user = await UserModel.findByPk(decoded.id, {
+            attributes: ['id', 'username', 'email', 'role', 'status']
+        });
+
+        if (!user) {
+            return res.status(403).json({ success: false, message: 'Token invalido.' });
+        }
+
+        if (user.status === 'banned') {
+            return res.status(403).json({ success: false, message: 'Conta banida.' });
+        }
+
+        req.user = user.toSafeJSON();
         req.userId = decoded.id;
-        req.userRole = decoded.role;
+        req.userRole = user.role;
         return next();
     } catch (err) {
         return res.status(403).json({ success: false, message: 'Token invalido ou expirado.' });

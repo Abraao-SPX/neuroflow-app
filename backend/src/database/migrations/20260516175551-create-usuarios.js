@@ -35,6 +35,11 @@ module.exports = {
         allowNull: false,
         defaultValue: 'user'
       },
+      status: {
+        type: Sequelize.STRING(20),
+        allowNull: false,
+        defaultValue: 'active'
+      },
       reset_token: {
         type: Sequelize.STRING,
         allowNull: true

@@ -19,7 +19,8 @@ class UserModel extends Model {
             username: this.username,
             name: this.username,
             email: this.email,
-            role: this.role
+            role: this.role,
+            status: this.status
         };
     }
 
@@ -117,6 +118,14 @@ UserModel.init(
             type: DataTypes.STRING,
             allowNull: false,
             defaultValue: 'user'
+        },
+        status: {
+            type: DataTypes.STRING(20),
+            allowNull: false,
+            defaultValue: 'active',
+            validate: {
+                isIn: [['active', 'banned']]
+            }
         },
         resetToken: {
             type: DataTypes.STRING,
