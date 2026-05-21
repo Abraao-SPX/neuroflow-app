@@ -8,7 +8,7 @@ O projeto e composto por uma API Node.js/Express, banco MySQL com Sequelize e um
 
 | Camada | Tecnologia | Responsabilidade |
 | --- | --- | --- |
-| Mobile | Flutter | Interface do aplicativo |
+| Mobile | Flutter (Provider, HTTP, SharedPreferences) | Interface do aplicativo e gerenciamento de estado |
 | API | Node.js, Express | Rotas REST, JWT, regras de negocio |
 | Banco | MySQL, Sequelize | Persistencia relacional e migrations |
 | Email | Nodemailer | Recuperacao de senha |
@@ -31,11 +31,6 @@ neuroflow-app/
       services/                # Email e integracoes
       utils/                   # Validacoes compartilhadas
     test/                      # Testes automatizados
-  docs/
-    API.md                     # Exemplos de requests
-    ARCHITECTURE.md            # Decisoes tecnicas
-    DATABASE.md                # Modelagem e migrations
-    OPENAPI.yaml               # Especificacao OpenAPI 3.0
   Flutter/
     lib/                       # App Flutter
 ```
@@ -76,6 +71,10 @@ Variaveis principais:
 | `TOKEN_EXPIRATION` | Expiracao do access token |
 | `REFRESH_TOKEN_SECRET` | Segredo do refresh token |
 | `REFRESH_TOKEN_EXPIRATION` | Expiracao do refresh token |
+| `RESET_TOKEN_EXPIRATION_MINUTES` | Tempo de expiracao do token de reset de senha (padrao: 5) |
+| `DB_LOGGING` | Habilita os logs das queries do banco de dados (true/false) |
+| `DB_SSL_CA` | Certificado CA customizado para conexao SSL |
+| `AUTO_FIX_AUTH_SCHEMA` | Corrige o schema de autenticacao automaticamente (true/false) |
 | `CORS_ORIGINS` | Origens permitidas separadas por virgula. Aceita porta curinga com `:*`, por exemplo `http://localhost:*` |
 | `MAIL_*` | Configuracao SMTP para recuperacao de senha |
 
@@ -134,6 +133,7 @@ docker compose exec backend npm run seed
 | `npm run verify` | Executa sintaxe e testes |
 | `npm run migrate` | Executa migrations do Sequelize |
 | `npm run seed` | Popula gatilhos iniciais |
+| `npm run admin:create` | Cria o usuario administrador padrao |
 
 ## API
 
@@ -185,8 +185,6 @@ Rotas de admin:
 | `PATCH` | `/triggers/:id` | Apenas `role=admin` |
 | `DELETE` | `/triggers/:id` | Apenas `role=admin` |
 
-Exemplos completos estao em [docs/API.md](docs/API.md). A especificacao OpenAPI esta em [docs/OPENAPI.yaml](docs/OPENAPI.yaml).
-
 ## Testes
 
 ```bash
@@ -209,8 +207,6 @@ Resumo da modelagem:
 
 Detalhes em [docs/DATABASE.md](docs/DATABASE.md).
 
-## Segurança
-
 - Senhas sao armazenadas com bcrypt.
 - Access tokens e refresh tokens usam JWT HS256.
 - Refresh tokens sao persistidos apenas como hash.
@@ -222,20 +218,31 @@ Detalhes em [docs/DATABASE.md](docs/DATABASE.md).
 
 ## Flutter
 
+Antes de rodar, certifique-se de configurar a URL da API em `Flutter/lib/core/constants/api_constants.dart`.
+
+### Baixando as dependências
 ```bash
 cd Flutter
 flutter pub get
-flutter run
 ```
 
-Configure a URL da API em `Flutter/lib/core/constants/api_constants.dart`.
+### Rodando na Web
+Para rodar o aplicativo no navegador (ideal para testes rápidos):
+```bash
+flutter run -d chrome
+```
 
-## Documentacao tecnica
-
-- [API examples](docs/API.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Database](docs/DATABASE.md)
-- [OpenAPI](docs/OPENAPI.yaml)
+### Rodando no Celular (Emulador ou Dispositivo Físico)
+1. Certifique-se de que o emulador está aberto ou seu celular está conectado via USB com a opção **"Depuração USB"** ativada nas Opções de Desenvolvedor.
+2. Verifique se o dispositivo foi reconhecido:
+```bash
+flutter devices
+```
+3. Execute o app:
+```bash
+flutter run
+```
+*Dica:* Caso tenha mais de um dispositivo conectado, o Flutter perguntará em qual deles você deseja rodar, ou você pode especificar usando `flutter run -d <id_do_dispositivo>`.
 
 ## Equipe
 
