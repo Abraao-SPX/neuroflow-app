@@ -49,7 +49,6 @@ async function sendPasswordResetEmail({ to, token, expires }) {
         dateStyle: 'short',
         timeStyle: 'short'
     });
-    const safeChildName = escapeHtml(childName);
 
     await createTransporter().sendMail({
         from: config.from,
@@ -85,6 +84,7 @@ async function sendParentVerificationEmail({ to, childName, code, expires }) {
         dateStyle: 'short',
         timeStyle: 'short'
     });
+    const safeChildName = escapeHtml(childName);
 
     await createTransporter().sendMail({
         from: config.from,
