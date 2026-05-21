@@ -10,6 +10,14 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+class _MoodOption {
+  const _MoodOption(this.label, this.emoji, this.color);
+
+  final String label;
+  final String emoji;
+  final Color color;
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   // 2. Variáveis para guardar o estado (o que foi selecionado)
   final TextEditingController _otherDiscomfortController =
@@ -18,6 +26,14 @@ class _HomeScreenState extends State<HomeScreen> {
   List<String> selectedTriggers = []; // Guarda vários gatilhos
 
   bool _isSaving = false;
+
+  static const List<_MoodOption> _moodOptions = [
+    _MoodOption('Ótimo', '😊', Color(0xFFB4D9A7)),
+    _MoodOption('Normal', '😐', Color(0xFF9EB6C8)),
+    _MoodOption('Cansado', '😔', Color(0xFFE7BE8C)),
+    _MoodOption('Triste', '😞', Color(0xFF9B87C9)),
+    _MoodOption('Ansioso', '😰', Color(0xFFE49A8F)),
+  ];
 
   @override
   void dispose() {
@@ -82,7 +98,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     const Color bgHeader = Color(0xFFD1E3E7);
     const Color bgBody = Color(0xFFFDF9F0);
-    const Color selectedGreen = Color(0xFFB4E1B5);
 
     return Scaffold(
       backgroundColor: bgBody,
@@ -108,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 alignment: Alignment.center,
                 children: [
                   const Text(
-                    'Daily Check-in',
+                    'Check-in diário',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -142,28 +157,40 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const Text(
                     'Como você está se sentindo hoje?',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Color(0xFF1F2933),
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
-                  // --- EMOJIS DE HUMOR ---
-                  Wrap(
-                    spacing: 14,
-                    runSpacing: 14,
-                    alignment: WrapAlignment.spaceBetween,
-                    children: [
-                      _buildMoodItem('Ótimo', '😊', selectedGreen),
-                      _buildMoodItem('Normal', '😐', Colors.white),
-                      _buildMoodItem('Cansado', '😔', Colors.white),
-                      _buildMoodItem('Triste', '😞', Colors.white),
-                      _buildMoodItem('Ansioso', '😰', Colors.white),
-                    ],
+                  SizedBox(
+                    height: 126,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: _moodOptions.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final mood = _moodOptions[index];
+                        return _buildMoodItem(
+                          mood.label,
+                          mood.emoji,
+                          mood.color,
+                        );
+                      },
+                    ),
                   ),
 
                   const SizedBox(height: 30),
                   const Text(
                     'O que está te incomodando agora?',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Color(0xFF1F2933),
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 15),
 
@@ -196,20 +223,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
                       labelText: 'Outros',
-                      hintText: 'Digite o que mais esta te incomodando',
-                      prefixIcon: const Icon(Icons.edit_note_outlined),
+                      hintText: 'Digite o que mais está te incomodando',
+                      prefixIcon: const Icon(
+                        Icons.edit_note_outlined,
+                        color: Color(0xFF4A6572),
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: Colors.black12),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: Colors.black12),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
                           color: Colors.green.withValues(alpha: 0.6),
                           width: 2,
@@ -223,8 +253,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton(
                     onPressed: _isSaving ? null : _handleSaveCheckin,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD1E3E7),
-                      foregroundColor: const Color(0xFF4A6572),
+                      backgroundColor: const Color(0xFF4A6572),
+                      disabledBackgroundColor: const Color(0xFFD1E3E7),
+                      disabledForegroundColor: const Color(0xFF4A6572),
+                      foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -236,9 +268,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text(
-                            "Salvar Check-in",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline),
+                              SizedBox(width: 8),
+                              Text(
+                                "Salvar Check-in",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
                           ),
                   ),
                   const SizedBox(height: 20),
@@ -256,45 +295,85 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMoodItem(String label, String emoji, Color activeColor) {
     bool isSelected = selectedMood == label;
 
-    return GestureDetector(
-      // Detecta o toque
-      onTap: () {
-        setState(() {
-          selectedMood = label; // Atualiza a tela
-        });
-      },
-      child: SizedBox(
-        width: 72,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? activeColor
-                    : Colors.white, // Muda a cor se selecionado
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: isSelected
-                      ? Colors.green.withValues(alpha: 0.5)
-                      : Colors.black12,
-                  width: isSelected ? 2 : 1,
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: 'Humor $label',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          setState(() {
+            selectedMood = label;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 104,
+          padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? activeColor.withValues(alpha: 0.38)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected
+                  ? activeColor.withValues(alpha: 0.9)
+                  : Colors.black12,
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isSelected ? 0.08 : 0.04),
+                blurRadius: isSelected ? 14 : 8,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: activeColor.withValues(alpha: 0.35),
+                  ),
                 ),
+                child: Text(emoji, style: const TextStyle(fontSize: 31)),
               ),
-              child: Text(emoji, style: const TextStyle(fontSize: 30)),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: isSelected ? Colors.black : Colors.black54,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              const SizedBox(height: 9),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: const Color(0xFF4A6572),
+                        fontWeight:
+                            isSelected ? FontWeight.w800 : FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF4A6572),
+                      size: 15,
+                    ),
+                  ],
+                ],
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -304,42 +383,68 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isSelected = selectedTriggers.contains(label);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: GestureDetector(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           setState(() {
             if (isSelected) {
-              selectedTriggers.remove(label); // Desmarca se já estiver marcado
+              selectedTriggers.remove(label);
             } else {
-              selectedTriggers.add(label); // Marca se estiver desmarcado
+              selectedTriggers.add(label);
             }
           });
         },
-        child: Container(
-          padding: const EdgeInsets.all(15),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFB4E1B5) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? const Color(0xFFDFF0DE) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected
-                  ? Colors.green.withValues(alpha: 0.5)
-                  : Colors.black12,
+              color: isSelected ? const Color(0xFF7DBA84) : Colors.black12,
+              width: isSelected ? 1.6 : 1,
             ),
           ),
           child: Row(
             children: [
-              Icon(icon, color: const Color(0xFF4A6572)),
-              const SizedBox(width: 15),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1E3E7).withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: const Color(0xFF4A6572)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: const Color(0xFF1F2933),
+                    fontWeight:
+                        isSelected ? FontWeight.w800 : FontWeight.w500,
+                  ),
                 ),
               ),
-              const Spacer(),
-              if (isSelected)
-                const Icon(Icons.check_circle, color: Colors.green, size: 20),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 160),
+                child: isSelected
+                    ? const Icon(
+                        Icons.check_circle,
+                        key: ValueKey('selected'),
+                        color: Color(0xFF4A8F58),
+                        size: 22,
+                      )
+                    : const Icon(
+                        Icons.radio_button_unchecked,
+                        key: ValueKey('unselected'),
+                        color: Colors.black26,
+                        size: 22,
+                      ),
+              ),
             ],
           ),
         ),
