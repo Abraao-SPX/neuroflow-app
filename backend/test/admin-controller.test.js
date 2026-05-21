@@ -79,7 +79,7 @@ test('AdminController returns users with account summary', async () => {
     });
 });
 
-test('AdminController bans a user and revokes refresh tokens', async () => {
+test('AdminController bans a user and revokes refresh tokens via updateUser', async () => {
     const transaction = createTransaction();
     const user = {
         id: 8,
@@ -104,10 +104,10 @@ test('AdminController bans a user and revokes refresh tokens', async () => {
         }]
     ], async () => {
         const res = createResponse();
-        await AdminController.setUserBanStatus({
+        await AdminController.updateUser({
             userId: 1,
             params: { id: '8' },
-            body: { banned: true }
+            body: { status: 'banned' }
         }, res);
 
         assert.equal(transaction.committed, true);
@@ -118,7 +118,7 @@ test('AdminController bans a user and revokes refresh tokens', async () => {
     });
 });
 
-test('AdminController promotes an active user to admin', async () => {
+test('AdminController promotes an active user to admin via updateUser', async () => {
     const transaction = createTransaction();
     const user = {
         id: 9,
@@ -137,9 +137,10 @@ test('AdminController promotes an active user to admin', async () => {
         [UserModel, { findByPk: async () => user }]
     ], async () => {
         const res = createResponse();
-        await AdminController.promoteUserToAdmin({
+        await AdminController.updateUser({
             userId: 1,
-            params: { id: '9' }
+            params: { id: '9' },
+            body: { role: 'admin' }
         }, res);
 
         assert.equal(transaction.committed, true);

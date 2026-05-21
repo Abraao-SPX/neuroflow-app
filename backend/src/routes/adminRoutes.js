@@ -9,8 +9,7 @@ router.use(authMiddleware);
 router.use(isAdminMiddleware);
 
 router.get('/users', AdminController.getAllUsers);
-router.patch('/users/:id/ban', AdminController.setUserBanStatus);
-router.patch('/users/:id/admin', AdminController.promoteUserToAdmin);
+router.patch('/users/:id', AdminController.updateUser);
 router.delete('/users/:id', AdminController.deleteUser);
 
 module.exports = router;
